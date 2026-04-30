@@ -1,0 +1,32 @@
+[
+  {
+    "id": "t1",
+    "name_ar": "التهاب لوزتين حاد",
+    "name_en": "Acute Tonsillitis",
+    "diagnosis": "التهاب لوزتين صديدي مع ارتفاع في درجة الحرارة",
+    "medicines": [
+      {"medicine_name": "أوجمنتين 1 جم", "dosage": "قرص واحد", "frequency": "كل 12 ساعة", "duration": "7 أيام"},
+      {"medicine_name": "أدول 500 ملجم", "dosage": "قرصين", "frequency": "كل 6 ساعات", "duration": "3 أيام"}
+    ]
+  },
+  {
+    "id": "t2",
+    "name_ar": "نزلة برد وإنفلونزا",
+    "name_en": "Common Cold",
+    "diagnosis": "رشح، سعال، وآلام عامة بالجسم",
+    "medicines": [
+      {"medicine_name": "فلوتاب", "dosage": "قرصين", "frequency": "ثلاث مرات يومياً", "duration": "5 أيام"},
+      {"medicine_name": "بندول 500 ملجم", "dosage": "قرص واحد", "frequency": "عند الحاجة", "duration": "3 أيام"}
+    ]
+  },
+  {
+    "id": "t3",
+    "name_ar": "حموضة وارتجاع معدي",
+    "name_en": "GERD / Acidity",
+    "diagnosis": "آلام في فم المعدة مع ارتجاع مريئي",
+    "medicines": [
+      {"medicine_name": "أوميبرازول 20 ملجم", "dosage": "كبسولة واحدة", "frequency": "قبل الإفطار", "duration": "14 يوم"},
+      {"medicine_name": "موكسال شراب", "dosage": "10 مل", "frequency": "بعد الوجبات", "duration": "7 أيام"}
+    ]
+  }
+]

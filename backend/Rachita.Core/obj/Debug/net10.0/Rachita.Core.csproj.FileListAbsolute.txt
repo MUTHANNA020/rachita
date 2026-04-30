@@ -1,0 +1,14 @@
+D:\2026\Rachita\rachita\backend\Rachita.Core\bin\Debug\net10.0\Rachita.Core.deps.json
+D:\2026\Rachita\rachita\backend\Rachita.Core\bin\Debug\net10.0\Rachita.Core.dll
+D:\2026\Rachita\rachita\backend\Rachita.Core\bin\Debug\net10.0\Rachita.Core.pdb
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.AssemblyInfoInputs.cache
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.AssemblyInfo.cs
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.csproj.CoreCompileInputs.cache
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.dll
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\refint\Rachita.Core.dll
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.pdb
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\ref\Rachita.Core.dll
+D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.deps.json
+D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.dll
+D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.pdb

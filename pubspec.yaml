@@ -1,0 +1,56 @@
+name: rachita
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  path: ^1.9.0
+  crypto: ^3.0.3
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.5.1
+  sqflite: ^2.3.0
+  path_provider: ^2.1.2
+  pdf: ^3.10.8
+  printing: ^5.11.1
+  qr_flutter: ^4.1.0
+  image_picker: ^1.0.7
+  intl: ^0.20.2
+  flutter_svg: ^2.0.10
+  sqflite_common_ffi_web: ^0.4.3
+  fl_chart: ^0.68.0
+  dartz: ^0.10.1
+  shared_preferences: ^2.5.3
+  speech_to_text: ^7.3.0
+  http: ^1.6.0
+  uuid: ^4.0.0
+  animations: ^2.0.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.3
+  build_runner: ^2.4.8
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/
+    - assets/images/
+    - assets/icons/
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf

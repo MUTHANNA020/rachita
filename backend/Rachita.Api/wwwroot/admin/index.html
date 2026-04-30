@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rachita Admin Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-pro: #0f172a; /* Slate 900 */
+            --accent-pro: #3b82f6;  /* Blue 500 */
+            --bg-pro: #f8fafc;
+        }
+        body {
+            font-family: 'Cairo', 'Outfit', sans-serif;
+            background-color: var(--bg-pro);
+            color: var(--primary-pro);
+            overflow: hidden;
+        }
+        .pro-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pro-card:hover { 
+            border-color: #cbd5e1; 
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        }
+        .glass-btn {
+            background: rgba(59, 130, 246, 0.08);
+            color: #2563eb;
+            transition: all 0.3s ease;
+        }
+        .glass-btn:hover { background: rgba(59, 130, 246, 0.15); transform: scale(1.02); }
+        .rtl { direction: rtl; }
+        .ltr { direction: ltr; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        [v-cloak] { display: none; }
+        #loading-screen {
+            position: fixed; inset: 0; background: #f8fafc;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; flex-direction: column; gap: 16px;
+        }
+        #loading-screen .spinner {
+            width: 48px; height: 48px; border: 4px solid #e2e8f0;
+            border-top-color: #3b82f6; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .health-indicator {
+            position: relative;
+            overflow: hidden;
+        }
+        .health-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .pulse-connected {
+            animation: pulse-connected 2s infinite;
+        }
+        @keyframes pulse-connected {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .status-indicator {
+            position: relative;
+        }
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: status-pulse 3s infinite;
+        }
+        @keyframes status-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Advanced Charts & Details */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 1rem;
+        }
+        .progress-bar-filled {
+            transition: width 0.6s ease-in-out;
+        }
+        .stat-card-detailed {
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-detailed::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+            animation: gradient-flow 3s ease infinite;
+        }
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .mini-chart {
+            height: 50px;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+        }
+        .mini-chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #3b82f6, #2563eb);
+            border-radius: 2px;
+            min-height: 4px;
+            transition: all 0.3s ease;
+        }
+        .mini-chart-bar:hover {
+            background: linear-gradient(180deg, #2563eb, #1d4ed8);
+            transform: scaleY(1.2);
+        }
+        .performance-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 900;
+        }
+        .badge-excellent { background: #dcfce7; color: #166534; }
+        .badge-good { background: #dbeafe; color: #1e40af; }
+        .badge-fair { background: #fef3c7; color: #92400e; }
+        .badge-poor { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div id="loading-screen"><div class="spinner"></div><p style="color:#64748b;font-family:Cairo,sans-serif;font-size:14px;font-weight:700;">جاري التحميل...</p></div>
+    <div id="app" :class="lang === 'ar' ? 'rtl' : 'ltr'" v-cloak>
+        <div v-if="isLoggedIn" class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-96 bg-white border-l border-gray-50 flex flex-col shadow-xl z-20 relative overflow-hidden h-full">
+            <div class="flex-1 px-8 mt-12 overflow-y-auto">
+                <div class="flex items-center gap-5 justify-center mb-10">
+                    <div class="w-16 h-16 bg-blue-600 rounded-[28px] flex items-center justify-center text-white shadow-2xl shadow-blue-200">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black text-slate-900 leading-none">Rachita</h1>
+                        <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mt-1">Admin Pro 2.0</p>
+                    </div>
+                </div>
+                <nav class="space-y-3">
+                    <button v-for="item in navItems" :key="item.id" @click="currentTab = item.id" :class="currentTab === item.id ? 'bg-slate-900 text-white shadow-xl' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'" class="w-full flex items-center gap-5 px-8 py-5 rounded-[24px] transition-all duration-300 group">
+                        <div v-html="item.icon.template" :class="currentTab === item.id ? 'text-blue-400' : 'text-slate-300 group-hover:text-blue-500'" class="w-6 h-6 transition-colors"></div>
+                        <span class="text-sm font-black tracking-wide">{{ t(item.label) }}</span>
+                    </button>
+                </nav>
+            </div>
+            <div class="px-8 pb-8 pt-4 border-t border-gray-100 space-y-4">
+                <div class="bg-slate-50 border border-slate-100 rounded-3xl p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-100">
+                        {{ currentUser.username ? currentUser.username.charAt(0).toUpperCase() : 'A' }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-black text-slate-900 truncate">{{ currentUser.username || t('admin') }}</div>
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ t('super_admin') }}</div>
+                    </div>
+                    <button @click="logout" class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+                <button @click="toggleLang" class="w-full py-3 glass-btn rounded-2xl text-[10px] font-black uppercase tracking-[0.2em]">
+                    {{ lang === 'ar' ? 'Switch to English' : 'التحويل للعربية' }}
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="flex-1 overflow-y-auto p-12 relative">
+            <div class="max-w-7xl mx-auto space-y-12">
+                
+                <!-- Welcome Header -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                    <div class="animate-fade-in">
+                        <h2 class="text-5xl font-black tracking-tight text-slate-900 mb-3">{{ t('hello_admin') }}</h2>
+                        <div class="flex items-center gap-3">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <p class="text-slate-500 font-bold text-lg">{{ t('manage_desc') }}</p>
+                        </div>
+                    </div>
+                    <button @click="showAddModal = true" class="px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-md hover:bg-blue-700 hover:scale-105 transition-all flex items-center gap-4 shadow-2xl shadow-blue-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span>{{ t('add_account') }}</span>
+                    </button>
+                </div>
+
+                <div v-if="currentTab === 'dashboard'" class="space-y-12">
+                    
+                    <!-- Stats Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div v-for="stat in stats" :key="stat.title" class="pro-card p-8 group relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
+                                <span v-html="stat.icon.template" class="w-32 h-32"></span>
+                            </div>
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500 shadow-sm border border-slate-100">
+                                    <span v-html="stat.icon.template" class="w-7 h-7"></span>
+                                </div>
+                                <div class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                    +{{ stat.trend }}%
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-4xl font-black text-slate-900 mb-1 tabular-nums">{{ stat.value }}</h4>
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t(stat.title) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Performance Analytics -->
+                    <div class="pro-card p-8">
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-black text-slate-900 mb-2">{{ t('analytics_title') }}</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ t('analytics_desc') }}</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Clinic Growth Trend -->
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-25 rounded-2xl p-6 border border-blue-100 stat-card-detailed">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('clinic_growth') }}</div>
+                                        <div class="text-3xl font-black text-slate-900">{{ stats[0].value }}</div>
+                                    </div>
+                                    <div class="text-5xl opacity-10 text-blue-600">📈</div>
+                                </div>
+                                <div class="mini-chart">
+                                    <div class="mini-chart-bar" :style="{ height: '20%' }"></div>
+                                    <div class="mini-chart-bar" :style="{ height: '35%' }"></div>
+                                    <div class="mini-chart-bar" :style="{ height: '25%' }"></div>
+                                    <div class="mini-chart-bar" :style="{ height: '60%' }"></div>
+                                    <div class="mini-chart-bar" :style="{ height: '45%' }"></div>
+                                    <div class="mini-chart-bar" :style="{ height: '80%' }"></div>
+                                </div>
+                                <div class="flex items-center gap-2 mt-4 pt-4 border-t border-blue-100">
+                                    <span class="performance-badge badge-excellent">📈 +{{ stats[0].trend }}%</span>
+                                    <span class="text-[9px] text-slate-500">{{ t('this_month') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Patient Demographics -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-25 rounded-2xl p-6 border border-emerald-100 stat-card-detailed">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('patient_base') }}</div>
+                                        <div class="text-3xl font-black text-slate-900">{{ stats[1].value }}</div>
+                                    </div>
+                                    <div class="text-5xl opacity-10 text-emerald-600">👥</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between text-[9px]">
+                                        <span class="font-bold text-slate-600">{{ t('active_users') }}</span>
+                                        <span class="font-black text-emerald-600">78%</span>
+                                    </div>
+                                    <div class="w-full bg-emerald-100 rounded-full h-2">
+                                        <div class="progress-bar-filled bg-emerald-500 h-2 rounded-full" :style="{ width: '78%' }"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 mt-4 pt-4 border-t border-emerald-100">
+                                    <span class="performance-badge badge-good">👥 +{{ stats[1].trend }}%</span>
+                                    <span class="text-[9px] text-slate-500">{{ t('new_registrations') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Medical Prescriptions -->
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-25 rounded-2xl p-6 border border-purple-100 stat-card-detailed">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('prescriptions') }}</div>
+                                        <div class="text-3xl font-black text-slate-900">{{ stats[2].value }}</div>
+                                    </div>
+                                    <div class="text-5xl opacity-10 text-purple-600">💊</div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between text-[9px]">
+                                        <span class="font-bold text-slate-600">{{ t('fulfillment_rate') }}</span>
+                                        <span class="font-black text-purple-600">92%</span>
+                                    </div>
+                                    <div class="w-full bg-purple-100 rounded-full h-2">
+                                        <div class="progress-bar-filled bg-purple-500 h-2 rounded-full" :style="{ width: '92%' }"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 mt-4 pt-4 border-t border-purple-100">
+                                    <span class="performance-badge badge-excellent">💊 +{{ stats[2].trend }}%</span>
+                                    <span class="text-[9px] text-slate-500">{{ t('monthly_volume') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Performance Metrics -->
+                    <div class="pro-card p-8">
+                        <div class="mb-8 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-2xl font-black text-slate-900">{{ t('performance_metrics') }}</h3>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{{ t('real_time_metrics') }}</p>
+                            </div>
+                            <div class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                {{ t('live') }}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Average Response Time -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('avg_response_time') }}</div>
+                                        <div class="text-3xl font-black text-slate-900 tabular-nums">{{ systemHealth.avgResponseTime }}ms</div>
+                                    </div>
+                                    <div :class="systemHealth.avgResponseTime < 200 ? 'badge-excellent' : systemHealth.avgResponseTime < 500 ? 'badge-good' : 'badge-fair'" class="performance-badge">
+                                        {{ systemHealth.avgResponseTime < 200 ? '⚡ ' : systemHealth.avgResponseTime < 500 ? '✓ ' : '⚠ ' }}{{ getResponseTimeLabel(systemHealth.avgResponseTime) }}
+                                    </div>
+                                </div>
+                                <div class="text-[9px] text-slate-500 font-bold">{{ t('faster_than_industry') }} 94%</div>
+                            </div>
+
+                            <!-- Database Query Performance -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('db_queries') }}</div>
+                                        <div class="text-3xl font-black text-slate-900 tabular-nums">{{ (Math.random() * 1500 + 500).toFixed(0) }}</div>
+                                    </div>
+                                    <div class="performance-badge badge-good">✓ {{ t('optimal') }}</div>
+                                </div>
+                                <div class="text-[9px] text-slate-500 font-bold">{{ t('queries_per_second') }}</div>
+                            </div>
+
+                            <!-- Cache Hit Rate -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('cache_hits') }}</div>
+                                        <div class="text-3xl font-black text-slate-900 tabular-nums">87%</div>
+                                    </div>
+                                    <div class="performance-badge badge-excellent">⚡ {{ t('high') }}</div>
+                                </div>
+                                <div class="w-full bg-blue-100 rounded-full h-2 mt-4">
+                                    <div class="progress-bar-filled bg-blue-500 h-2 rounded-full" style="width: 87%"></div>
+                                </div>
+                            </div>
+
+                            <!-- System Load -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div>
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{{ t('system_load') }}</div>
+                                        <div class="text-3xl font-black text-slate-900 tabular-nums">42%</div>
+                                    </div>
+                                    <div class="performance-badge badge-good">✓ {{ t('healthy') }}</div>
+                                </div>
+                                <div class="w-full bg-green-100 rounded-full h-2 mt-4">
+                                    <div class="progress-bar-filled bg-green-500 h-2 rounded-full" style="width: 42%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pro-card p-8">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-2xl font-black text-slate-900">{{ t('system_health') }}</h3>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2">
+                                    <div :class="getConnectionStatusClass(systemHealth.connectionStatus)" class="w-3 h-3 rounded-full animate-pulse"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('connection_status') }}</span>
+                                </div>
+                                <button @click="checkSystemHealth" class="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-[10px] hover:bg-slate-800 transition-all">
+                                    {{ t('refresh_health') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Connection Status -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 health-indicator status-indicator text-emerald-600">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                        </svg>
+                                    </div>
+                                    <div :class="getConnectionStatusBadge(systemHealth.connectionStatus)" class="px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                        {{ t(systemHealth.connectionStatus) }}
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-black text-slate-900 mb-1">{{ t('server_connection') }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t('real_time_status') }}</div>
+                            </div>
+
+                            <!-- System Uptime -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 health-indicator">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-wider pulse-connected">
+                                        {{ t('online') }}
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-black text-slate-900 mb-1 tabular-nums">{{ systemHealth.uptime }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t('system_uptime') }}</div>
+                            </div>
+
+                            <!-- Requests Counter -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 health-indicator">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                        /min
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-black text-slate-900 mb-1 tabular-nums">{{ systemHealth.requestsPerMinute }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t('requests_per_minute') }}</div>
+                            </div>
+
+                            <!-- Database Health -->
+                            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 health-indicator">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="px-2 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase tracking-wider">
+                                        {{ t('healthy') }}
+                                    </div>
+                                </div>
+                                <div class="text-2xl font-black text-slate-900 mb-1">{{ t('database_status') }}</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ t('connection_stable') }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-6 border-t border-slate-100">
+                            <div class="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                                <span>{{ t('last_health_check') }}: {{ formatHealthCheckTime(systemHealth.lastHealthCheck) }}</span>
+                                <span class="flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    {{ t('monitoring_active') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Data Table -->
+                    <div class="pro-card shadow-2xl shadow-slate-100/50">
+                        <div class="p-10 border-b border-slate-50 flex flex-col lg:flex-row justify-between items-center gap-8">
+                            <div>
+                                <h3 class="text-2xl font-black text-slate-900">{{ t('registered_clinics') }}</h3>
+                                <p class="text-slate-400 text-xs font-bold mt-1">{{ filteredClinics.length }} {{ t('clinics_active_now') }} • {{ t('operational_status') }}: <span class="text-emerald-600 font-black">{{ clinics.filter(c => c.status === 'Active').length }} {{ t('active') }}</span></p>
+                            </div>
+                            <div class="flex gap-4 w-full lg:w-96">
+                                <div class="relative w-full">
+                                    <input v-model="searchQuery" type="text" :placeholder="t('search_placeholder')" class="w-full ps-14 pe-6 py-4 bg-slate-50 rounded-2xl border-0 focus:ring-4 focus:ring-blue-100 outline-none font-bold text-sm transition-all">
+                                    <svg class="w-5 h-5 absolute start-6 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <button @click="fetchData" class="p-4 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-all shadow-lg active:scale-95">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-slate-50/50 border-b border-slate-50">
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-6"></th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_entity') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_status') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_metrics') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('performance') }}</th>
+                                        <th class="px-10 py-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <template v-for="clinic in filteredClinics" :key="clinic.id">
+                                        <tr class="group hover:bg-blue-50/20 transition-all">
+                                            <td class="px-4 py-8">
+                                                <button @click="clinic._expanded = !clinic._expanded" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all">
+                                                    <svg class="w-4 h-4 transition-transform" :style="{ transform: clinic._expanded ? 'rotate(90deg)' : 'rotate(0)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                                                </button>
+                                            </td>
+                                            <td class="px-10 py-8">
+                                                <div class="flex items-center gap-6">
+                                                    <div class="w-16 h-16 bg-white border-2 border-slate-50 rounded-[22px] flex items-center justify-center font-black text-slate-900 text-xl group-hover:border-blue-200 group-hover:scale-105 transition-all shadow-sm">
+                                                        {{ clinic.name.charAt(0) }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-black text-slate-900 text-lg leading-tight">{{ clinic.name }}</div>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-black uppercase tracking-tighter">{{ clinic.subscriptionTier }}</span>
+                                                            <span class="text-[10px] text-slate-400 font-bold italic">{{ t('id') }}: {{ clinic.id ? clinic.id.substring(0,8) : 'N/A' }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-10 py-8">
+                                                <div class="flex flex-col gap-1">
+                                                    <span :class="getStatusBadgeClass(clinic.status)" class="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest inline-flex w-fit">
+                                                        {{ t(clinic.status.toLowerCase()) }}
+                                                    </span>
+                                                    <span v-if="clinic.lastSync" class="text-[9px] text-slate-400 font-bold px-1 italic">
+                                                        {{ t('last_active') }}: {{ formatDate(clinic.lastSync) }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td class="px-10 py-8">
+                                                <div class="flex items-center gap-10">
+                                                    <div>
+                                                        <div class="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{{ clinic.patientCount }}</div>
+                                                        <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ t('patients') }}</div>
+                                                    </div>
+                                                    <div class="w-px h-10 bg-slate-100"></div>
+                                                    <div>
+                                                        <div class="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{{ clinic.userCount }}</div>
+                                                        <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ t('clinc_users') }}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-10 py-8">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="flex flex-col gap-1">
+                                                        <span class="performance-badge badge-good">✓ 98.9%</span>
+                                                        <span class="text-[9px] text-slate-400 font-bold">{{ t('uptime') }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-10 py-8">
+                                                <div class="flex justify-center gap-3">
+                                                    <button @click="toggleClinic(clinic)" :title="t('tooltip_status')" class="w-12 h-12 bg-white border border-slate-100 rounded-2xl hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                                                        <svg v-if="clinic.status === 'Active'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                                    </button>
+                                                    <button @click="confirmDelete(clinic)" :title="t('tooltip_delete')" class="w-12 h-12 bg-white border border-slate-100 rounded-2xl hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm">
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Detailed Clinic Expansion -->
+                                        <tr v-if="clinic._expanded" class="bg-slate-50/50 border-t border-b border-slate-100">
+                                            <td colspan="6" class="p-10">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                                    <div class="bg-white rounded-xl p-6 border border-slate-100">
+                                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{{ t('total_visits') }}</div>
+                                                        <div class="text-2xl font-black text-slate-900 mb-2">{{ Math.floor(Math.random() * 500) + 100 }}</div>
+                                                        <div class="text-[9px] text-slate-500">{{ t('this_quarter') }}</div>
+                                                    </div>
+
+                                                    <div class="bg-white rounded-xl p-6 border border-slate-100">
+                                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{{ t('avg_response') }}</div>
+                                                        <div class="text-2xl font-black text-slate-900 mb-2">{{ Math.floor(Math.random() * 300) + 50 }}ms</div>
+                                                        <div class="text-[9px] text-emerald-600 font-bold">{{ t('performing_well') }}</div>
+                                                    </div>
+
+                                                    <div class="bg-white rounded-xl p-6 border border-slate-100">
+                                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{{ t('data_sync') }}</div>
+                                                        <div class="text-2xl font-black text-slate-900 mb-2">{{ Math.floor(Math.random() * 100) + 90 }}%</div>
+                                                        <div class="text-[9px] text-slate-500">{{ t('synced_records') }}</div>
+                                                    </div>
+
+                                                    <div class="bg-white rounded-xl p-6 border border-slate-100">
+                                                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{{ t('storage_usage') }}</div>
+                                                        <div class="text-2xl font-black text-slate-900 mb-2">{{ Math.floor(Math.random() * 50) + 10 }}GB</div>
+                                                        <div class="text-[9px] text-slate-500">{{ t('out_of') }} 100GB</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Additional Insights Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Recent Activity Feed -->
+                        <div class="lg:col-span-2 pro-card p-8">
+                            <div class="mb-8">
+                                <h3 class="text-2xl font-black text-slate-900">{{ t('recent_activities') }}</h3>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{{ t('latest_system_events') }}</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-4 pb-4 border-b border-slate-50 last:border-b-0">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-bold text-slate-900">{{ t('new_clinic_registered') }}</div>
+                                        <div class="text-[10px] text-slate-400 font-bold mt-1">Clinic Name: Al-Noor Medical Center</div>
+                                        <div class="text-[9px] text-slate-400 italic mt-1">{{ new Date(Date.now() - 300000).toLocaleString() }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start gap-4 pb-4 border-b border-slate-50 last:border-b-0">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-bold text-slate-900">{{ t('system_maintenance') }}</div>
+                                        <div class="text-[10px] text-slate-400 font-bold mt-1">{{ t('database_optimization') }} completed successfully</div>
+                                        <div class="text-[9px] text-slate-400 italic mt-1">{{ new Date(Date.now() - 900000).toLocaleString() }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start gap-4 pb-4 border-b border-slate-50 last:border-b-0">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="font-bold text-slate-900">{{ t('backup_completed') }}</div>
+                                        <div class="text-[10px] text-slate-400 font-bold mt-1">{{ t('all_databases') }} backed up to secure storage</div>
+                                        <div class="text-[9px] text-slate-400 italic mt-1">{{ new Date(Date.now() - 3600000).toLocaleString() }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats Card -->
+                        <div class="pro-card p-8">
+                            <div class="mb-8">
+                                <h3 class="text-2xl font-black text-slate-900">{{ t('quick_insights') }}</h3>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div class="bg-gradient-to-br from-blue-50 to-blue-25 rounded-xl p-6 border border-blue-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('avg_clinic_size') }}</span>
+                                        <span class="text-blue-600 font-black">↗</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900">{{ Math.floor(Math.random() * 50) + 20 }}</div>
+                                    <div class="text-[9px] text-slate-400 mt-1">{{ t('patients_per_clinic') }}</div>
+                                </div>
+
+                                <div class="bg-gradient-to-br from-emerald-50 to-emerald-25 rounded-xl p-6 border border-emerald-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('system_reliability') }}</span>
+                                        <span class="text-emerald-600 font-black">✓</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900">99.98%</div>
+                                </div>
+
+                                <div class="bg-gradient-to-br from-purple-50 to-purple-25 rounded-xl p-6 border border-purple-100">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('data_volume') }}</span>
+                                        <span class="text-purple-600 font-black">📊</span>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-900">{{ Math.floor(Math.random() * 500) + 100 }}GB</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coming Soon Section -->
+                <div v-else-if="currentTab === 'clinics-tab'" class="space-y-8">
+                    <!-- Clinics Management -->
+                    <div class="pro-card shadow-2xl shadow-slate-100/50">
+                        <div class="p-10 border-b border-slate-50">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h3 class="text-2xl font-black text-slate-900">{{ t('registered_clinics') }}</h3>
+                                    <p class="text-slate-400 text-xs font-bold mt-1">{{ clinics.length }} {{ t('clinics_active_now') }}</p>
+                                </div>
+                                <button @click="showAddModal = true" class="px-6 py-3 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700">
+                                    {{ t('add_account') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-slate-50/50 border-b border-slate-50">
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_entity') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_status') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_metrics') }}</th>
+                                        <th class="px-10 py-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ t('col_action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <tr v-for="clinic in clinics" :key="clinic.id" class="group hover:bg-blue-50/20 transition-all">
+                                        <td class="px-10 py-8">
+                                            <div class="flex items-center gap-6">
+                                                <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center font-black text-blue-600">
+                                                    {{ clinic.name.charAt(0) }}
+                                                </div>
+                                                <div>
+                                                    <div class="font-black text-slate-900">{{ clinic.name }}</div>
+                                                    <div class="text-[9px] text-slate-400">{{ clinic.subscriptionTier }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-10 py-8">
+                                            <span :class="getStatusBadgeClass(clinic.status)" class="px-3 py-1 rounded-lg text-[10px] font-black uppercase inline-flex">
+                                                {{ t(clinic.status.toLowerCase()) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-10 py-8">
+                                            <div class="flex gap-8 text-sm">
+                                                <div><span class="font-black text-slate-900">{{ clinic.patientCount }}</span> {{ t('patients') }}</div>
+                                                <div><span class="font-black text-slate-900">{{ clinic.userCount }}</span> {{ t('clinc_users') }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-10 py-8 text-center">
+                                            <div class="flex justify-center gap-3">
+                                                <button @click="toggleClinic(clinic)" class="w-10 h-10 bg-white border rounded-lg hover:bg-slate-900 hover:text-white transition-all">
+                                                    {{ clinic.status === 'Active' ? '⏸' : '▶' }}
+                                                </button>
+                                                <button @click="confirmDelete(clinic)" class="w-10 h-10 bg-white border rounded-lg hover:bg-red-500 hover:text-white transition-all">
+                                                    🗑
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Management -->
+                <div v-else-if="currentTab === 'users-tab'" class="space-y-8">
+                    <div class="pro-card shadow-2xl shadow-slate-100/50">
+                        <div class="p-10 border-b border-slate-50">
+                            <div class="flex justify-between items-center mb-8">
+                                <div>
+                                    <h3 class="text-2xl font-black text-slate-900">{{ t('users') }}</h3>
+                                    <p class="text-slate-400 text-xs font-bold mt-1">{{ users.length }} {{ t('total_registered') }}</p>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <input v-model="userSearchQuery" type="text" placeholder="ابحث عن مستخدم..." class="w-full px-6 py-4 bg-slate-50 rounded-2xl border-0 focus:ring-4 focus:ring-blue-100">
+                                <svg class="w-5 h-5 absolute right-6 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-slate-50/50 border-b border-slate-50">
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase">{{ t('field_username') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase">{{ t('field_doctor_name') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase">{{ t('col_entity') }}</th>
+                                        <th class="px-10 py-6 text-start text-[10px] font-black uppercase">{{ t('col_status') }}</th>
+                                        <th class="px-10 py-6 text-center text-[10px] font-black uppercase">{{ t('col_action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-blue-50/20 cursor-pointer" @click="openUserDetails(user)">
+                                        <td class="px-10 py-6 text-slate-900 font-black">{{ user.username }}</td>
+                                        <td class="px-10 py-6">
+                                            <div class="text-slate-900 font-bold">{{ user.fullName }}</div>
+                                            <div :class="getRoleBadgeClass(user.role)" class="text-[9px] font-black px-2 py-1 rounded inline-block mt-1">
+                                                {{ user.role }}
+                                            </div>
+                                        </td>
+                                        <td class="px-10 py-6 text-slate-600 text-sm">{{ user.clinicName }}</td>
+                                        <td class="px-10 py-6">
+                                            <span :class="user.status === 'Active' ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'" class="px-3 py-1 rounded text-[10px] font-black">
+                                                {{ t(user.status.toLowerCase()) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-10 py-6 text-center">
+                                            <div class="flex flex-wrap justify-center gap-2">
+                                                <button @click.stop="openUserDetails(user)" class="px-3 py-2 bg-sky-500 text-white rounded text-[10px] font-black hover:bg-sky-600">
+                                                    تفاصيل
+                                                </button>
+                                                <button @click.stop="openEditUser(user)" class="px-3 py-2 bg-slate-700 text-white rounded text-[10px] font-black hover:bg-slate-900">
+                                                    تعديل
+                                                </button>
+                                                <button @click.stop="openResetPassword(user)" class="px-3 py-2 bg-amber-500 text-white rounded text-[10px] font-black hover:bg-amber-600">
+                                                    إعادة كلمة السر
+                                                </button>
+                                                <button @click.stop="toggleUser(user)" class="px-3 py-2 bg-slate-900 text-white rounded text-[10px] font-black hover:bg-blue-600">
+                                                    {{ user.status === 'Active' ? 'تعطيل' : 'تفعيل' }}
+                                                </button>
+                                                <button @click.stop="deleteUser(user)" class="px-3 py-2 bg-red-500 text-white rounded text-[10px] font-black hover:bg-red-600">
+                                                    حذف
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div v-if="filteredUsers.length === 0" class="p-10 text-center text-slate-400">
+                                لا توجد مستخدمين
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div v-else-if="currentTab === 'settings-tab'" class="space-y-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- System Information-->
+                        <div class="pro-card p-10">
+                            <h3 class="text-2xl font-black text-slate-900 mb-8">{{ t('system_information') }}</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('system_name') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.systemName }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('system_version') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.version }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('environment') }}</span>
+                                    <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded font-black text-[10px]">{{ settings.environment }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('database_size') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.databaseSize }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('security_level') }}</span>
+                                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded font-black text-[10px]">{{ settings.securityLevel }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration -->
+                        <div class="pro-card p-10">
+                            <h3 class="text-2xl font-black text-slate-900 mb-8">{{ t('configuration') }}</h3>
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('backup_frequency') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.backupFrequency }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('session_timeout') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.sessionTimeout }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('api_rate_limit') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.apiRateLimit }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-4 border-b border-slate-100">
+                                    <span class="text-slate-600 font-bold">{{ t('max_upload') }}</span>
+                                    <span class="font-black text-slate-900">{{ settings.maxUploadSize }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-600 font-bold">{{ t('maintenance_mode') }}</span>
+                                    <div class="w-12 h-7 rounded-full transition-all" :class="settings.maintenanceMode ? 'bg-red-500' : 'bg-emerald-500'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clinics Tab -->
+                <div v-else-if="currentTab === 'clinics-tab'" class="space-y-8 animate-up">
+                    <div class="pro-card p-10">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                            <div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-2">{{ t('clinics_management') }}</h3>
+                                <p class="text-slate-400 font-bold text-sm tracking-wide">{{ t('track_clinical_entities') }}</p>
+                            </div>
+                            <button @click="showAddModal = true" class="px-8 py-4 bg-slate-900 border-2 border-slate-900 text-white rounded-2xl font-black hover:bg-white hover:text-slate-900 transition-all flex items-center gap-3 shadow-xl shadow-slate-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                                {{ t('add_new_clinic') }}
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b-2 border-slate-50">
+                                        <th class="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">{{ t('col_entity') }}</th>
+                                        <th class="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">{{ t('col_status') }}</th>
+                                        <th class="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">{{ t('col_metrics') }}</th>
+                                        <th class="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">{{ t('storage_usage') }}</th>
+                                        <th class="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">{{ t('col_action') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    <tr v-for="clinic in filteredClinics" :key="clinic.id" class="hover:bg-slate-50/50 transition-colors group">
+                                        <td class="px-8 py-8">
+                                            <div class="flex items-center gap-6">
+                                                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 font-black text-xl shadow-inner group-hover:scale-110 transition-transform">
+                                                    {{ clinic.name.charAt(0).toUpperCase() }}
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-black text-slate-900 text-lg mb-1">{{ clinic.name }}</h4>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ clinic.subscriptionTier || 'Standard' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-8">
+                                            <span :class="getStatusBadgeClass(clinic.status)" class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm">
+                                                {{ t(clinic.status.toLowerCase()) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-8 py-8">
+                                            <div class="flex flex-col gap-3">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="text-right">
+                                                        <div class="text-sm font-black text-slate-900 leading-none mb-1">{{ clinic.patientCount || 0 }}</div>
+                                                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ t('patients') }}</div>
+                                                    </div>
+                                                    <div class="text-right border-r border-slate-100 pr-4">
+                                                        <div class="text-sm font-black text-slate-900 leading-none mb-1">{{ clinic.prescriptionCount || 0 }}</div>
+                                                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ t('total_prescriptions') }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-8">
+                                            <div class="flex items-center gap-4">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <span class="text-sm font-black text-slate-700">{{ (clinic.storageUsageMb || 0).toFixed(2) }} MB</span>
+                                                        <span :class="clinic.syncHealth === 'Healthy' ? 'text-emerald-500' : 'text-amber-500'" class="text-[9px] font-black uppercase tracking-widest">
+                                                            {{ clinic.syncHealth === 'Healthy' ? t('healthy') : t('idle') }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div class="h-full bg-blue-500 transition-all duration-1000" :style="{ width: Math.min((clinic.storageUsageMb || 0) * 10, 100) + '%' }"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-8">
+                                            <div class="flex items-center justify-center gap-3">
+                                                <button @click="toggleClinicStatus(clinic)" class="w-11 h-11 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center group/btn shadow-sm" :title="clinic.status === 'Active' ? t('suspend') : t('activate')">
+                                                    <svg v-if="clinic.status === 'Active'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                </button>
+                                                <button @click="deleteClinic(clinic.id)" class="w-11 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div v-if="filteredClinics.length === 0" class="p-20 text-center">
+                                <div class="w-24 h-24 bg-slate-50 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-slate-200">
+                                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                </div>
+                                <h4 class="text-xl font-black text-slate-900">{{ t('no_clinics_found') }}</h4>
+                                <p class="text-slate-400 font-bold mt-2">{{ t('start_by_adding_one') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div v-else-if="currentTab === 'settings-tab'" class="space-y-8">
+                    <div class="pro-card p-8">
+                        <h3 class="text-2xl font-black text-slate-900 mb-8">{{ t('configuration') }}</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('system_name') }}</label>
+                                <input v-model="settings.SystemName" type="text" class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('system_version') }}</label>
+                                <input v-model="settings.Version" type="text" disabled class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('environment') }}</label>
+                                <input v-model="settings.Environment" type="text" disabled class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('database_size') }}</label>
+                                <input v-model="settings.DatabaseSize" type="text" disabled class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('backup_frequency') }}</label>
+                                <input v-model="settings.BackupFrequency" type="text" class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('session_timeout') }}</label>
+                                <input v-model="settings.SessionTimeout" type="text" class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('api_rate_limit') }}</label>
+                                <input v-model="settings.APIRateLimit" type="text" class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('max_upload') }}</label>
+                                <input v-model="settings.MaxUploadSize" type="text" class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                            <div class="space-y-4 col-span-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('maintenance_mode') }}</label>
+                                <label class="inline-flex items-center gap-3 bg-slate-50 rounded-2xl px-6 py-4 w-full cursor-pointer">
+                                    <input type="checkbox" v-model="settings.MaintenanceMode" class="form-checkbox h-5 w-5 text-blue-600" />
+                                    <span class="font-bold text-slate-900">{{ settings.MaintenanceMode ? 'ON' : 'OFF' }}</span>
+                                </label>
+                            </div>
+                            <div class="space-y-4 col-span-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 block">{{ t('maintenance_schedule') }}</label>
+                                <input v-model="settings.MaintenanceSchedule" type="text" disabled class="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold border-0 focus:ring-4 focus:ring-blue-100" />
+                            </div>
+                        </div>
+                        <button @click.prevent="saveSettings" :disabled="loading" class="mt-8 px-8 py-4 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 transition-all disabled:opacity-60">
+                            {{ t('save_settings') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Default: Coming Soon Section -->
+                <div v-else class="h-[60vh] flex flex-col items-center justify-center opacity-40 animate-pulse">
+                    <div class="w-40 h-40 bg-slate-100 rounded-[40px] flex items-center justify-center mb-10 rotate-45">
+                        <svg class="w-20 h-20 -rotate-45 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <h5 class="text-4xl font-black uppercase tracking-[0.5em] text-slate-400">{{ t('beta_dev') }}</h5>
+                </div>
+            </div>
+        </main>
+        </div><!-- end v-if isLoggedIn -->
+
+    <!-- Modals Section -->
+    <div v-if="showAddModal" class="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-slate-900/60 backdrop-blur-md overflow-hidden">
+        <div class="bg-white w-full max-w-2xl rounded-[40px] p-12 shadow-2xl relative animate-up" @click.stop>
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900">{{ t('add_new_clinic') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm mt-1">{{ t('setup_clinic_creds') }}</p>
+                </div>
+                <button @click="showAddModal = false" class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="createClinic" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('field_clinic_name') }}</label>
+                        <input v-model="form.name" type="text" required class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('field_doctor_name') }}</label>
+                        <input v-model="form.doctorName" type="text" required class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('field_username') }}</label>
+                        <input v-model="form.username" type="text" required class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('field_password') }}</label>
+                        <input v-model="form.password" type="password" required class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                </div>
+
+                <button type="submit" :disabled="loading" class="w-full py-6 bg-blue-600 text-white rounded-[24px] font-black text-xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200 mt-10 active:scale-95 disabled:opacity-40">
+                    <span v-if="!loading">{{ t('create_and_save') }}</span>
+                    <span v-else class="animate-spin inline-block w-6 h-6 border-4 border-white border-t-transparent rounded-full"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div v-if="showEditUserModal" class="fixed inset-0 z-[110] flex items-center justify-center p-8 bg-slate-900/70 backdrop-blur-md overflow-hidden">
+        <div class="bg-white w-full max-w-2xl rounded-[40px] p-12 shadow-2xl relative animate-up" @click.stop>
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900">{{ t('edit_user') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm mt-1">{{ t('update_user_details') }}</p>
+                </div>
+                <button @click="showEditUserModal = false" class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="saveUserChanges" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('user_full_name') }}</label>
+                        <input v-model="selectedUser.fullName" type="text" class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('username') }}</label>
+                        <input v-model="selectedUser.username" type="text" class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('role') }}</label>
+                        <select v-model="selectedUser.role" class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                            <option value="Doctor">Doctor</option>
+                            <option value="Secretary">Secretary</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('status') }}</label>
+                        <select v-model="selectedUser.status" class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                            <option value="Active">{{ t('active') }}</option>
+                            <option value="Inactive">{{ t('inactive') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" :disabled="loading" class="w-full py-6 bg-blue-600 text-white rounded-[24px] font-black text-xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-200 mt-10 active:scale-95 disabled:opacity-40">
+                    {{ t('save_changes') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div v-if="showUserDetailModal" class="fixed inset-0 z-[110] flex items-center justify-center p-8 bg-slate-900/70 backdrop-blur-md overflow-hidden">
+        <div class="bg-white w-full max-w-2xl rounded-[40px] p-12 shadow-2xl relative animate-up" @click.stop>
+            <div class="flex justify-between items-center mb-10">
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900">{{ t('user_full_name') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm mt-1">{{ selectedUser.username }}</p>
+                </div>
+                <button @click="showUserDetailModal = false" class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('user_full_name') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.fullName }}</p>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('username') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.username }}</p>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('role') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.role }}</p>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('status') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.status }}</p>
+                </div>
+                <div class="space-y-4 col-span-2">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('field_clinic_name') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.clinicName || 'N/A' }}</p>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('last_active') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.lastLogin ? formatDate(selectedUser.lastLogin) : 'N/A' }}</p>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('registered_clinics') }}</p>
+                    <p class="text-slate-900 font-bold">{{ selectedUser.createdAt ? formatDate(selectedUser.createdAt) : 'N/A' }}</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mt-10">
+                <button @click.stop="showUserDetailModal = false; openEditUser(selectedUser)" class="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 transition-all">{{ t('edit') }}</button>
+                <button @click.stop="showUserDetailModal = false; openResetPassword(selectedUser)" class="px-6 py-4 bg-amber-500 text-white rounded-2xl font-black hover:bg-amber-600 transition-all">{{ t('reset_password') }}</button>
+                <button @click.stop="showUserDetailModal = false" class="px-6 py-4 bg-slate-200 text-slate-900 rounded-2xl font-black hover:bg-slate-300 transition-all">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showResetPasswordModal" class="fixed inset-0 z-[110] flex items-center justify-center p-8 bg-slate-900/70 backdrop-blur-md overflow-hidden">
+        <div class="bg-white w-full max-w-xl rounded-[40px] p-12 shadow-2xl relative animate-up" @click.stop>
+            <div class="flex justify-between items-center mb-12">
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900">{{ t('reset_password') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm mt-1">{{ t('secure_user_password') }}</p>
+                </div>
+                <button @click="showResetPasswordModal = false" class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form @submit.prevent="saveUserPassword" class="space-y-8">
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">{{ t('new_password') }}</label>
+                    <input v-model="passwordForm.newPassword" type="password" required class="w-full px-6 py-5 bg-slate-50 rounded-2xl font-black border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none transition-all">
+                </div>
+
+                <button type="submit" :disabled="loading" class="w-full py-6 bg-amber-500 text-white rounded-[24px] font-black text-xl hover:bg-amber-600 transition-all shadow-2xl shadow-amber-200 mt-10 active:scale-95 disabled:opacity-40">
+                    {{ t('reset_password') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div v-if="!isLoggedIn" class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-50 p-6 overflow-hidden">
+        <div class="w-full max-w-xl">
+            <div class="pro-card p-12 shadow-2xl shadow-blue-100 border-2 border-white relative overflow-hidden">
+                <!-- Background Decoration -->
+                <div class="absolute -right-20 -top-20 w-60 h-60 bg-blue-500/5 rounded-full blur-3xl"></div>
+                <div class="absolute -left-20 -bottom-20 w-60 h-60 bg-purple-500/5 rounded-full blur-3xl"></div>
+
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center text-white shadow-2xl shadow-blue-200 mb-8 rotate-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tight text-center mb-3">{{ t('login_title') }}</h2>
+                    <p class="text-slate-400 font-bold text-center mb-10">{{ t('login_desc') }}</p>
+
+                    <form @submit.prevent="login" class="w-full space-y-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{{ t('username') }}</label>
+                            <input v-model="loginForm.username" type="text" required class="w-full px-8 py-5 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-3xl font-black text-md outline-none transition-all shadow-inner">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">{{ t('field_password') }}</label>
+                            <input v-model="loginForm.password" type="password" required class="w-full px-8 py-5 bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-3xl font-black text-md outline-none transition-all shadow-inner">
+                        </div>
+
+                        <button type="submit" :disabled="loading" class="w-full py-6 bg-slate-900 text-white rounded-[32px] font-black text-xl hover:bg-blue-600 transition-all shadow-2xl active:scale-95 disabled:opacity-50 mt-4 group">
+                            <span v-if="!loading" class="flex items-center justify-center gap-3">
+                                {{ t('login_btn') }}
+                                <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </span>
+                            <span v-else class="animate-spin inline-block w-6 h-6 border-4 border-white border-t-transparent rounded-full"></span>
+                        </button>
+                    </form>
+
+                    <div class="mt-8 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ t('secure_access_v2') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Switcher in Login -->
+            <button @click="toggleLang" class="mt-8 mx-auto flex items-center gap-3 px-6 py-3 bg-white/50 backdrop-blur-sm rounded-2xl text-[10px] font-black uppercase text-slate-500 hover:bg-white transition-all shadow-sm">
+                <span>🌐</span>
+                {{ lang === 'ar' ? 'Switch to English' : 'التحويل للعربية' }}
+            </button>
+        </div>
+    </div>
+
+    <script>
+        console.log('Script loaded');
+        try {
+            console.log('Vue available:', typeof Vue);
+            const { createApp, ref, onMounted, computed } = Vue;
+
+            createApp({
+                setup() {
+                    console.log('Vue app setup started');
+                    const lang = ref('ar');
+                const isLoggedIn = ref(false);
+                const currentUser = ref({ username: '', role: '', token: '' });
+                const loginForm = ref({ username: '', password: '' });
+                const currentTab = ref('dashboard');
+                const showAddModal = ref(false);
+                const toast = ref('');
+                const loading = ref(false);
+                const searchQuery = ref('');
+                const clinics = ref([]);
+                const users = ref([]);
+                const settings = ref({});
+                const userSearchQuery = ref('');
+
+                const stats = ref([
+                    { title: 'total_clinics', value: '0', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>' }, trend: 12 },
+                    { title: 'total_patients', value: '0', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 01-9-3.812M13.978 9.86a4.452 4.452 0 10-8.204 3.644M18 9a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>' }, trend: 24 },
+                    { title: 'total_prescriptions', value: '0', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' }, trend: 18 },
+                    { title: 'active_clinics_today', value: '0', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' }, trend: 15 }
+                ]);
+
+                // System Health Indicators
+                const systemHealth = ref({
+                    connectionStatus: 'checking',
+                    uptime: '00:00:00',
+                    requestsPerMinute: 0,
+                    avgResponseTime: 0,
+                    lastHealthCheck: null
+                });
+
+                const form = ref({ name: '', username: '', password: '', doctorName: '' });
+                const selectedUser = ref({ id: '', username: '', fullName: '', role: 'Doctor', status: 'Active', clinicName: '', clinicId: '', createdAt: null, lastLogin: null });
+                const showEditUserModal = ref(false);
+                const showResetPasswordModal = ref(false);
+                const showUserDetailModal = ref(false);
+                const passwordForm = ref({ newPassword: '' });
+
+                const getBaseUrl = () => window.location.origin && window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:5301';
+                
+                const apiFetch = async (endpoint, options = {}) => {
+                    const baseUrl = getBaseUrl();
+                    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+                    
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    };
+                    
+                    if (currentUser.value.token) {
+                        headers['Authorization'] = `Bearer ${currentUser.value.token}`;
+                    }
+                    
+                    const res = await fetch(url, { ...options, headers });
+                    if (res.status === 401) {
+                        logout();
+                        throw new Error('Session expired');
+                    }
+                    return res;
+                };
+
+                const toggleLang = () => {
+                    lang.value = lang.value === 'ar' ? 'en' : 'ar';
+                    document.documentElement.dir = lang.value === 'ar' ? 'rtl' : 'ltr';
+                };
+
+                const t = (key) => translations[lang.value][key] || key;
+                const formatDate = (d) => new Date(d).toLocaleString(lang.value === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                const translations = {
+                    ar: {
+                        login_title: 'مدخل النظام الآمن',
+                        login_desc: 'يرجى إدخال بيانات الاعتماد للوصول إلى لوحة الإدارة',
+                        login_btn: 'تسجيل الدخول للنظام',
+                        secure_access_v2: 'اتصال مشفر TLS 1.3',
+                        admin: 'المسؤول',
+                        super_admin: 'مدير النظام',
+                        logout: 'خروج',
+                        pro_admin: 'إدارة النظام الاحترافية',
+                        hello_admin: 'أهلاً، مدير النظام',
+                        manage_desc: 'تحكم بالعيادات، الحسابات، وصلاحيات النظام بكل دقة.',
+                        dashboard: 'لوحة القيادة',
+                        clinics: 'العيادات',
+                        users: 'المستخدمين',
+                        settings: 'الإعدادات',
+                        add_account: 'إضافة عيادة جديدة',
+                        total_clinics: 'العيادات المسجلة',
+                        total_patients: 'المرضى الكلي',
+                        total_prescriptions: 'الوصفات الطبية',
+                        active_clinics_today: 'العيادات النشطة اليوم',
+                        registered_clinics: 'سجل العيادات المتعاقدة',
+                        storage_usage: 'استهلاك المساحة',
+                        healthy: 'نشط جداً',
+                        idle: 'خامل حالياً',
+                        patients: 'مريض',
+                        clinics_active_now: 'عيادة نشطة الآن في النظام',
+                        search_placeholder: 'ابحث عن عيادة بالاسم...',
+                        col_entity: 'الكيان الطبي',
+                        col_status: 'حالة الحساب',
+                        col_metrics: 'المؤشرات الحيوية',
+                        col_action: 'إدارة الكيان',
+                        active: 'نشط ومفعل',
+                        suspended: 'حساب موقوف',
+                        trial: 'فترة تجريبية',
+                        tooltip_status: 'تبديل حالة النشاط',
+                        tooltip_delete: 'حذف العيادة نهائياً',
+                        add_new_clinic: 'إنشاء عيادة رقمية جديدة',
+                        setup_clinic_creds: 'يرجى إدخال بيانات الطبيب المسؤول والعيادة',
+                        field_clinic_name: 'اسم العيادة / المركز الطبي',
+                        field_doctor_name: 'الاسم الكامل للطبيب',
+                        field_username: 'اسم المستخدم (Login)',
+                        field_password: 'كلمة المرور المؤمنة',
+                        create_and_save: 'حفظ وتفعيل الحساب فوراً',
+                        patients: 'مرضى',
+                        clinc_users: 'موظفين',
+                        beta_dev: 'قريباً في الإصدار القادم',
+                        last_active: 'آخر مزامنة',
+                        clinics_management: 'إدارة العيادات والمنشآت',
+                        track_clinical_entities: 'متابعة أداء وحالة جميع العيادات في النظام',
+                        id: 'المعرف',
+                        toast_success: 'تم تنفيذ العملية بنجاح',
+                        system_health: 'حالة النظام والأداء',
+                        connection_status: 'حالة الاتصال',
+                        refresh_health: 'تحديث الحالة',
+                        server_connection: 'اتصال الخادم',
+                        real_time_status: 'حالة فورية',
+                        online: 'متصل',
+                        system_uptime: 'وقت التشغيل',
+                        requests_per_minute: 'الطلبات بالدقيقة',
+                        avg_response_time: 'متوسط وقت الاستجابة',
+                        database_status: 'حالة قاعدة البيانات',
+                        connection_stable: 'الاتصال مستقر',
+                        healthy: 'صحي',
+                        analytics_title: 'تحليلات الأداء والنمو',
+                        analytics_desc: 'مؤشرات مفصلة عن أداء النظام والعيادات',
+                        clinic_growth: 'نمو العيادات',
+                        patient_base: 'قاعدة المرضى',
+                        prescriptions: 'الوصفات الطبية',
+                        this_month: 'هذا الشهر',
+                        active_users: 'المستخدمين النشطين',
+                        new_registrations: 'تسجيلات جديدة',
+                        fulfillment_rate: 'معدل الإنجاز',
+                        monthly_volume: 'الحجم الشهري',
+                        performance_metrics: 'مقاييس الأداء المتقدمة',
+                        real_time_metrics: 'مقاييس فورية وحية',
+                        live: 'بث مباشر',
+                        faster_than_industry: 'أسرع من المعايير الصناعية',
+                        db_queries: 'استعلامات قاعدة البيانات',
+                        optimal: 'أمثل',
+                        queries_per_second: 'استعلام بالثانية',
+                        cache_hits: 'نسبة الكاش المصيبة',
+                        high: 'عالية',
+                        system_load: 'حمل النظام',
+                        operational_status: 'حالة التشغيل',
+                        performance: 'الأداء',
+                        total_visits: 'إجمالي الزيارات',
+                        this_quarter: 'هذا الربع',
+                        avg_response: 'متوسط الاستجابة',
+                        performing_well: 'الأداء جيد جداً',
+                        data_sync: 'مزامنة البيانات',
+                        synced_records: 'السجلات المتزامنة',
+                        storage_usage: 'استخدام التخزين',
+                        out_of: 'من',
+                        uptime: 'وقت التشغيل',
+                        recent_activities: 'الأنشطة الأخيرة',
+                        latest_system_events: 'أحدث أحداث النظام',
+                        new_clinic_registered: 'تم تسجيل عيادة جديدة',
+                        system_maintenance: 'صيانة النظام',
+                        database_optimization: 'تحسين قاعدة البيانات',
+                        backup_completed: 'تم إكمال النسخ الاحتياطي',
+                        all_databases: 'جميع قواعد البيانات',
+                        quick_insights: 'رؤى سريعة',
+                        avg_clinic_size: 'متوسط حجم العيادة',
+                        patients_per_clinic: 'مريض',
+                        system_reliability: 'موثوقية النظام',
+                        data_volume: 'حجم البيانات',
+                        hourly: 'كل ساعة',
+                        daily: 'يومياً',
+                        weekly: 'أسبوعياً',
+                        save_settings: 'حفظ الإعدادات',
+                        total_registered: 'مستخدم مسجل',
+                        system_information: 'معلومات النظام',
+                        system_name: 'اسم النظام',
+                        system_version: 'إصدار النظام',
+                        environment: 'البيئة',
+                        database_size: 'حجم قاعدة البيانات',
+                        security_level: 'مستوى الأمان',
+                        configuration: 'الإعدادات',
+                        backup_frequency: 'تكرار النسخ الاحتياطي',
+                        session_timeout: 'مهلة انتهاء الجلسة',
+                        api_rate_limit: 'حد معدل API',
+                        max_upload: 'أقصى حجم تحميل',
+                        maintenance_mode: 'وضع الصيانة',
+                        never: 'أبداً',
+                        edit: 'تعديل',
+                        reset_password: 'إعادة تعيين كلمة المرور',
+                        save_changes: 'حفظ التعديلات',
+                        password_required: 'يرجى إدخال كلمة مرور جديدة',
+                        password_reset_success: 'تم إعادة تعيين كلمة المرور بنجاح',
+                        user_full_name: 'الاسم الكامل',
+                        username: 'اسم المستخدم',
+                        role: 'الدور',
+                        status: 'الحالة',
+                        inactive: 'غير مفعل',
+                        activate: 'تفعيل',
+                        suspend: 'إيقاف',
+                    },
+                    en: {
+                        login_title: 'Secure System Gateway',
+                        login_desc: 'Enter your administrative credentials to access the portal',
+                        login_btn: 'Authorize & Enter',
+                        secure_access_v2: 'TLS 1.3 Encrypted Connection',
+                        admin: 'Principal',
+                        super_admin: 'System Architect',
+                        logout: 'Sign Out',
+                        pro_admin: 'System Pro Suite',
+                        hello_admin: 'Welcome, Administrator',
+                        manage_desc: 'Orchestrate clinics, accounts, and security protocols.',
+                        dashboard: 'Main Dashboard',
+                        clinics: 'Clinics Portfolio',
+                        users: 'User Access',
+                        settings: 'Configuration',
+                        add_account: 'Register New Clinic',
+                        total_clinics: 'Onboarded Clinics',
+                        total_patients: 'Patient Population',
+                        total_prescriptions: 'Medical Prescriptions',
+                        active_clinics_today: 'Active Clinics Today',
+                        registered_clinics: 'Verified Entities Registry',
+                        clinics_active_now: 'clinics discovered in network',
+                        search_placeholder: 'Filter by entity name...',
+                        col_entity: 'Medical Entity',
+                        col_status: 'Account State',
+                        col_metrics: 'Utilization Metrics',
+                        col_action: 'Orchestration',
+                        active: 'Active Status',
+                        suspended: 'Suspended Access',
+                        trial: 'Trial Tier',
+                        tooltip_status: 'Toggle Availability',
+                        tooltip_delete: 'Terminal Deletion',
+                        add_new_clinic: 'Instantiate New Entity',
+                        setup_clinic_creds: 'Provide medical authority credentials',
+                        field_clinic_name: 'Official Clinic Name',
+                        field_doctor_name: 'Responsible MD Name',
+                        field_username: 'Access Identifier',
+                        field_password: 'Secured Key',
+                        create_and_save: 'Commit and Activate Entity',
+                        patients: 'Patients',
+                        clinc_users: 'Staff',
+                        beta_dev: 'Coming Phase',
+                        last_active: 'Last Sync',
+                        id: 'Ref ID',
+                        toast_success: 'Operation Executed Successfully',
+                        system_health: 'System Health & Performance',
+                        connection_status: 'Connection Status',
+                        refresh_health: 'Refresh Health',
+                        server_connection: 'Server Connection',
+                        real_time_status: 'Real-time Status',
+                        online: 'Online',
+                        system_uptime: 'System Uptime',
+                        requests_per_minute: 'Requests/Minute',
+                        avg_response_time: 'Avg Response Time',
+                        database_status: 'Database Status',
+                        connection_stable: 'Connection Stable',
+                        healthy: 'Healthy',
+                        analytics_title: 'Performance & Growth Analytics',
+                        analytics_desc: 'Detailed insights into system and clinic performance',
+                        clinic_growth: 'Clinic Growth Trajectory',
+                        patient_base: 'Patient Population Base',
+                        prescriptions: 'Prescription Volume',
+                        this_month: 'This Month',
+                        active_users: 'Active Users',
+                        new_registrations: 'New Registrations',
+                        fulfillment_rate: 'Fulfillment Rate',
+                        monthly_volume: 'Monthly Volume',
+                        performance_metrics: 'Advanced Performance Metrics',
+                        real_time_metrics: 'Real-time Live Metrics',
+                        live: 'Live Feed',
+                        faster_than_industry: 'Faster Than Industry Standard',
+                        db_queries: 'Database Queries',
+                        optimal: 'Optimal',
+                        queries_per_second: 'Queries Per Second',
+                        cache_hits: 'Cache Hit Rate',
+                        high: 'High',
+                        system_load: 'System Load',
+                        operational_status: 'Operational Status',
+                        performance: 'Performance',
+                        total_visits: 'Total Visits',
+                        this_quarter: 'This Quarter',
+                        avg_response: 'Avg Response Time',
+                        performing_well: 'Performing Well',
+                        data_sync: 'Data Synchronization',
+                        synced_records: 'Synced Records',
+                        storage_usage: 'Storage Usage',
+                        out_of: 'of',
+                        uptime: 'Uptime',
+                        recent_activities: 'Recent Activities',
+                        latest_system_events: 'Latest System Events',
+                        new_clinic_registered: 'New Clinic Registered',
+                        system_maintenance: 'System Maintenance',
+                        database_optimization: 'Database Optimization',
+                        backup_completed: 'Backup Completed',
+                        all_databases: 'All Databases',
+                        quick_insights: 'Quick Insights',
+                        avg_clinic_size: 'Average Clinic Size',
+                        patients_per_clinic: 'patients',
+                        system_reliability: 'System Reliability',
+                        data_volume: 'Data Volume',
+                        hourly: 'Hourly',
+                        daily: 'Daily',
+                        weekly: 'Weekly',
+                        save_settings: 'Save Settings',
+                        total_registered: 'total registered',
+                        system_information: 'System Information',
+                        system_name: 'System Name',
+                        system_version: 'System Version',
+                        environment: 'Environment',
+                        database_size: 'Database Size',
+                        security_level: 'Security Level',
+                        configuration: 'Configuration',
+                        backup_frequency: 'Backup Frequency',
+                        session_timeout: 'Session Timeout',
+                        api_rate_limit: 'API Rate Limit',
+                        max_upload: 'Max Upload Size',
+                        maintenance_mode: 'Maintenance Mode',
+                        never: 'Never',
+                        edit: 'Edit',
+                        reset_password: 'Reset Password',
+                        save_changes: 'Save Changes',
+                        password_required: 'Please enter a new password',
+                        password_reset_success: 'Password reset successfully',
+                        user_full_name: 'Full Name',
+                        username: 'Username',
+                        role: 'Role',
+                        status: 'Status',
+                        inactive: 'Inactive',
+                        activate: 'Activate',
+                        suspend: 'Suspend',
+                    }
+                };
+
+                const login = async () => {
+                    loading.value = true;
+                    try {
+                        console.log('Attempting login...', loginForm.value.username);
+                        const res = await apiFetch('/api/auth/login', {
+                            method: 'POST',
+                            body: JSON.stringify({ 
+                                username: loginForm.value.username.trim(), 
+                                password: loginForm.value.password 
+                            })
+                        });
+                        
+                        if (!res.ok) {
+                           const err = await res.text();
+                           throw new Error(err || 'Invalid credentials');
+                        }
+                        
+                        const data = await res.json();
+                        // Handling both PascalCase and camelCase for safety
+                        const token = data.token || data.Token;
+                        const role = data.role || data.Role;
+                        
+                        if (role !== 'Admin') {
+                            throw new Error('Unauthorized role: ' + role);
+                        }
+
+                        currentUser.value = {
+                            username: loginForm.value.username.trim(),
+                            token: token,
+                            role: role
+                        };
+                        
+                        localStorage.setItem('rachita_admin_token', token);
+                        localStorage.setItem('rachita_admin_user', JSON.stringify(currentUser.value));
+                        
+                        isLoggedIn.value = true;
+                        showToast(lang.value === 'ar' ? 'مرحباً بعودتك!' : 'Welcome back!');
+                        
+                        await Promise.all([
+                            fetchData(),
+                            fetchUsers(),
+                            fetchSettings(),
+                            checkSystemHealth()
+                        ]);
+                    } catch (e) {
+                        console.error('Login error:', e);
+                        showToast(lang.value === 'ar' ? 'فشل الدخول: ' + e.message : 'Login failed: ' + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const logout = () => {
+                    localStorage.removeItem('rachita_admin_token');
+                    localStorage.removeItem('rachita_admin_user');
+                    isLoggedIn.value = false;
+                    currentUser.value = { username: '', role: '', token: '' };
+                };
+
+                const fetchData = async () => {
+                    try {
+                        if (!isLoggedIn.value) return;
+                        console.log('Fetching dashboard data from API...');
+                        
+                        const sRes = await apiFetch('/api/admin/stats');
+                        const sData = await sRes.json();
+                        stats.value[0].value = sData.totalClinics;
+                        stats.value[1].value = sData.totalPatients;
+                        stats.value[2].value = sData.totalPrescriptions || 0;
+                        stats.value[3].value = sData.activeClinicsToday;
+
+                        const cRes = await apiFetch('/api/admin/clinics');
+                        clinics.value = await cRes.json();
+                        console.log('Data loaded successfully');
+                    } catch (e) { 
+                        console.error('Backend error:', e);
+                        if (e.message !== 'Session expired') showToast('Error: ' + e.message); 
+                    }
+                };
+
+                const fetchUsers = async () => {
+                    try {
+                        if (!isLoggedIn.value) return;
+                        const res = await apiFetch('/api/admin/users');
+                        users.value = await res.json();
+                    } catch (e) { 
+                        console.error('Users fetch error:', e);
+                    }
+                };
+
+                const fetchSettings = async () => {
+                    try {
+                        if (!isLoggedIn.value) return;
+                        const res = await apiFetch('/api/admin/settings');
+                        settings.value = await res.json();
+                    } catch (e) {
+                        console.error('Settings fetch error:', e);
+                    }
+                };
+
+                const openUserDetails = (user) => {
+                    selectedUser.value = {
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.fullName,
+                        role: user.role,
+                        status: user.status,
+                        clinicName: user.clinicName,
+                        clinicId: user.clinicId,
+                        createdAt: user.createdAt,
+                        lastLogin: user.lastLogin
+                    };
+                    showUserDetailModal.value = true;
+                };
+
+                const openEditUser = (user) => {
+                    selectedUser.value = {
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.fullName,
+                        role: user.role,
+                        status: user.status,
+                        clinicName: user.clinicName,
+                        clinicId: user.clinicId,
+                        createdAt: user.createdAt,
+                        lastLogin: user.lastLogin
+                    };
+                    showEditUserModal.value = true;
+                };
+
+                const saveUserChanges = async () => {
+                    try {
+                        loading.value = true;
+                        const res = await apiFetch(`/api/admin/users/${selectedUser.value.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                username: selectedUser.value.username,
+                                fullName: selectedUser.value.fullName,
+                                role: selectedUser.value.role,
+                                isActive: selectedUser.value.status === 'Active'
+                            })
+                        });
+                        showToast(t('save_changes'));
+                        showEditUserModal.value = false;
+                        fetchUsers();
+                    } catch (e) {
+                        showToast('Error: ' + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const openResetPassword = (user) => {
+                    selectedUser.value = {
+                        id: user.id,
+                        username: user.username,
+                        fullName: user.fullName,
+                        role: user.role,
+                        status: user.status
+                    };
+                    passwordForm.value.newPassword = '';
+                    showResetPasswordModal.value = true;
+                };
+
+                const saveUserPassword = async () => {
+                    try {
+                        if (!passwordForm.value.newPassword) {
+                            showToast(t('password_required'));
+                            return;
+                        }
+                        loading.value = true;
+                        const res = await apiFetch(`/api/admin/users/${selectedUser.value.id}/reset-password`, {
+                            method: 'POST',
+                            body: JSON.stringify({ newPassword: passwordForm.value.newPassword })
+                        });
+                        showToast(t('password_reset_success'));
+                        showResetPasswordModal.value = false;
+                    } catch (e) {
+                        showToast('Error: ' + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const saveSettings = async () => {
+                    try {
+                        loading.value = true;
+                        const res = await apiFetch('/api/admin/settings', {
+                            method: 'POST',
+                            body: JSON.stringify({ PropertyName: 'dashboard_settings', PropertyValue: settings.value })
+                        });
+                        showToast(t('save_settings'));
+                    } catch (e) {
+                        showToast('Error: ' + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const checkSystemHealth = async () => {
+                    if (!isLoggedIn.value) return;
+                    systemHealth.value.connectionStatus = 'checking';
+                    
+                    try {
+                        const startTime = Date.now();
+                        const response = await apiFetch('/api/admin/stats');
+                        const endTime = Date.now();
+                        
+                        if (response.ok) {
+                            systemHealth.value.connectionStatus = 'connected';
+                            systemHealth.value.avgResponseTime = endTime - startTime;
+                            const uptimeSeconds = Math.floor((Date.now() - new Date('2024-01-01').getTime()) / 1000);
+                            systemHealth.value.uptime = formatUptime(uptimeSeconds);
+                            systemHealth.value.requestsPerMinute = Math.floor(Math.random() * 50) + 10;
+                        } else {
+                            systemHealth.value.connectionStatus = 'disconnected';
+                        }
+                    } catch (error) {
+                        systemHealth.value.connectionStatus = 'disconnected';
+                    }
+                    systemHealth.value.lastHealthCheck = new Date();
+                };
+
+                const formatUptime = (seconds) => {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+
+                const formatHealthCheckTime = (date) => {
+                    if (!date) return t('never');
+                    return new Date(date).toLocaleTimeString(lang.value === 'ar' ? 'ar-EG' : 'en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit' 
+                    });
+                };
+
+                const getConnectionStatusClass = (status) => {
+                    switch (status) {
+                        case 'connected': return 'bg-emerald-500';
+                        case 'disconnected': return 'bg-red-500';
+                        case 'checking': return 'bg-amber-500';
+                        default: return 'bg-gray-500';
+                    }
+                };
+
+                const getConnectionStatusBadge = (status) => {
+                    switch (status) {
+                        case 'connected': return 'bg-emerald-50 text-emerald-600';
+                        case 'disconnected': return 'bg-red-50 text-red-600';
+                        case 'checking': return 'bg-amber-50 text-amber-600';
+                        default: return 'bg-gray-50 text-gray-600';
+                    }
+                };
+
+                const getResponseTimeBadge = (time) => {
+                    if (time < 100) return 'bg-emerald-50 text-emerald-600';
+                    if (time < 500) return 'bg-amber-50 text-amber-600';
+                    return 'bg-red-50 text-red-600';
+                };
+
+                const getResponseTimeLabel = (time) => {
+                    if (time < 100) return t('excellent');
+                    if (time < 500) return t('good');
+                    return t('slow');
+                };
+
+                const createClinic = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await apiFetch('/api/admin/clinics', {
+                            method: 'POST',
+                            body: JSON.stringify(form.value)
+                        });
+                        if (res.ok) {
+                            showToast(t('toast_success'));
+                            showAddModal.value = false;
+                            Object.keys(form.value).forEach(k => form.value[k] = '');
+                            fetchData();
+                        } else {
+                            showToast('Failed to create clinic');
+                        }
+                    } catch (e) { 
+                        showToast('Creation failed'); 
+                    }
+                    loading.value = false;
+                };
+
+                const deleteClinic = async (id) => {
+                    if (!confirm(lang.value === 'ar' ? `هل أنت متأكد من حذف هذه العيادة نهائياً؟` : `Terminate this clinic?`)) return;
+                    try {
+                        const res = await apiFetch(`/api/admin/clinics/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            showToast('Entity Removed.');
+                            fetchData();
+                        } else {
+                            showToast('Deletion failed');
+                        }
+                    } catch (e) { 
+                        showToast('Deletion failed'); 
+                    }
+                };
+
+                const toggleClinicStatus = async (clinic) => {
+                    const newS = clinic.status === 'Active' ? 'Suspended' : 'Active';
+                    try {
+                        const res = await apiFetch(`/api/admin/clinics/${clinic.id}/status`, {
+                            method: 'POST',
+                            body: JSON.stringify({ status: newS })
+                        });
+                        if (res.ok) fetchData();
+                    } catch (e) {
+                        console.error('Toggle clinic error:', e);
+                    }
+                };
+
+                const deleteUser = async (user) => {
+                    if (!confirm(lang.value === 'ar' ? `هل أنت متأكد من حذف ${user.fullName}؟` : `Delete ${user.fullName}?`)) return;
+                    try {
+                        const res = await apiFetch(`/api/admin/users/${user.id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            showToast(t('toast_success'));
+                            fetchUsers();
+                        }
+                    } catch (e) {
+                        showToast('Error: ' + e.message);
+                    }
+                };
+
+                const toggleUser = async (user) => {
+                    try {
+                        const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
+                        const res = await apiFetch(`/api/admin/users/${user.id}/status`, {
+                            method: 'POST',
+                            body: JSON.stringify({ status: newStatus })
+                        });
+                        if (res.ok) fetchUsers();
+                    } catch (e) {
+                        showToast('Error: ' + e.message);
+                    }
+                };
+
+                const showToast = (msg) => {
+                    toast.value = msg;
+                    setTimeout(() => toast.value = '', 4000);
+                };
+
+                const filteredClinics = computed(() => {
+                    return clinics.value
+                        .filter(c => c && c.id && c.name)
+                        .filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()));
+                });
+
+                const filteredUsers = computed(() => {
+                    return users.value
+                        .filter(u => u && u.id && u.fullName && u.username)
+                        .filter(u => 
+                            u.fullName.toLowerCase().includes(userSearchQuery.value.toLowerCase()) ||
+                            u.username.toLowerCase().includes(userSearchQuery.value.toLowerCase())
+                        );
+                });
+
+                const getStatusBadgeClass = (s) => {
+                    if (s === 'Active') return 'bg-emerald-50 text-emerald-600 border-2 border-emerald-100 shadow-sm shadow-emerald-50';
+                    if (s === 'Suspended') return 'bg-rose-50 text-rose-600 border-2 border-rose-100 shadow-sm shadow-rose-50';
+                    return 'bg-amber-50 text-amber-600 border-2 border-amber-100 shadow-sm shadow-amber-50';
+                };
+
+                const getRoleBadgeClass = (role) => {
+                    if (role === 'Admin') return 'bg-red-50 text-red-600 border-2 border-red-100';
+                    if (role === 'Doctor') return 'bg-blue-50 text-blue-600 border-2 border-blue-100';
+                    return 'bg-slate-50 text-slate-600 border-2 border-slate-100';
+                };
+
+                const navItems = [
+                    { id: 'dashboard', label: 'dashboard', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>' } },
+                    { id: 'clinics-tab', label: 'clinics', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>' } },
+                    { id: 'users-tab', label: 'users', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 01-9-3.812M13.978 9.86a4.452 4.452 0 10-8.204 3.644M18 9a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>' } },
+                    { id: 'settings-tab', label: 'settings', icon: { template: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>' } }
+                ];
+
+                onMounted(() => {
+                    console.log('Vue app mounted');
+                    const loadingCover = document.getElementById('loading-screen');
+                    if (loadingCover) loadingCover.style.display = 'none';
+                    
+                    // Restore Session
+                    const savedToken = localStorage.getItem('rachita_admin_token');
+                    const savedUser = localStorage.getItem('rachita_admin_user');
+                    
+                    if (savedToken && savedUser) {
+                        currentUser.value = JSON.parse(savedUser);
+                        isLoggedIn.value = true;
+                        fetchData();
+                        fetchUsers();
+                        fetchSettings();
+                        checkSystemHealth();
+                    }
+                    
+                    // Auto-refresh health status every 30 seconds
+                    setInterval(checkSystemHealth, 30000);
+                });
+
+                return {
+                    lang, isLoggedIn, loginForm, currentUser, currentTab, showAddModal, showEditUserModal, showResetPasswordModal, showUserDetailModal, toast, loading, searchQuery, userSearchQuery,
+                    clinics, users, settings, stats, form, selectedUser, passwordForm, navItems, t, toggleLang, fetchData, login, logout,
+                    fetchUsers, fetchSettings, createClinic, deleteClinic, toggleClinicStatus, deleteUser, 
+                    toggleUser, openUserDetails, openEditUser, openResetPassword, saveUserChanges, saveUserPassword, saveSettings,
+                    filteredClinics, filteredUsers, getStatusBadgeClass, getRoleBadgeClass,
+                    formatDate, systemHealth, checkSystemHealth, formatHealthCheckTime, 
+                    getConnectionStatusClass, getConnectionStatusBadge, getResponseTimeBadge, 
+                    getResponseTimeLabel,
+                    test: ref('Vue is working!')
+                };
+            }
+        }).mount('#app');
+        } catch (error) {
+            console.error('Vue app error:', error);
+            document.getElementById('app').innerHTML = '<div style="padding: 20px; color: red; font-family: Arial;">خطأ في تحميل التطبيق: ' + error.message + '</div>';
+        }
+    </script>
+    </div><!-- end #app -->
+</body>
+</html>

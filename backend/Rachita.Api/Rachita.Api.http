@@ -1,0 +1,6 @@
+@Rachita.Api_HostAddress = http://localhost:5153
+
+GET {{Rachita.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
