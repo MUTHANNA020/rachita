@@ -605,13 +605,76 @@ class MedicalSpeechNormalizer {
     }
 
     return ParsedMedicine(
-      name: name,
+      name: name.isNotEmpty ? name : rawText.trim(),
       dosage: dosage,
       dosageUnit: doseMatch?.group(3) ?? '',
       frequency: frequency,
       duration: duration,
       rawNormalized: normalized,
     );
+  }
+
+  /// NEW MASSIVE UPGRADE: Multi-Intent Parsing
+  /// Extracts MULTIPLE medicines from a single continuous audio stream.
+  /// Example: "اصرف بنادول حبتين في اليوم وبروفين 400 ملغ عند اللزوم"
+  static List<ParsedMedicine> extractMultipleMedicines(String rawText) {
+    final normalized = normalize(rawText);
+    final results = <ParsedMedicine>[];
+    
+    // 1. Identify all known drugs in the sentence using sliding window
+    final words = normalized.split(RegExp(r'\s+'));
+    final drugIndices = <int, String>{}; 
+    
+    for (int i = 0; i < words.length; i++) {
+       // Skip very small words
+       if (words[i].length < 3) continue;
+
+       // try 2 words (e.g. "vitamin d")
+       if (i < words.length - 1) {
+          final phrase = '${words[i]} ${words[i+1]}';
+          if (isKnownDrug(phrase)) {
+             drugIndices[i] = _dict[phrase.toLowerCase()] ?? _capitalize(phrase);
+             i++; 
+             continue;
+          }
+       }
+       // try single word
+       if (isKnownDrug(words[i])) {
+          final fuzzy = _fuzzyMatch(words[i].toLowerCase());
+          drugIndices[i] = fuzzy ?? _capitalize(words[i]);
+       }
+    }
+    
+    // If we didn't find any known drugs, fallback to single parse
+    if (drugIndices.isEmpty) {
+        final single = parseMedicineCommand(rawText);
+        if (single.name.trim().isNotEmpty && single.name.length > 2) {
+           return [single];
+        }
+        return [];
+    }
+
+    // Segment the text based on drug indices
+    final indices = drugIndices.keys.toList()..sort();
+    
+    for (int i = 0; i < indices.length; i++) {
+        final startIndex = indices[i];
+        final endIndex = (i < indices.length - 1) ? indices[i+1] : words.length;
+        
+        final chunk = words.sublist(startIndex, endIndex).join(' ');
+        final parsed = parseMedicineCommand(chunk);
+        
+        results.add(ParsedMedicine(
+            name: drugIndices[startIndex]!,
+            dosage: parsed.dosage,
+            dosageUnit: parsed.dosageUnit,
+            frequency: parsed.frequency,
+            duration: parsed.duration,
+            rawNormalized: chunk,
+        ));
+    }
+
+    return results;
   }
 }
 

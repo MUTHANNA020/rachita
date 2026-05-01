@@ -21,3 +21,4 @@ D:\2026\Rachita\rachita\backend\Rachita.Infrastructure\tmp_build\Rachita.Infrast
 D:\2026\Rachita\rachita\backend\Rachita.Infrastructure\tmp_build\Rachita.Infrastructure.pdb
 D:\2026\Rachita\rachita\backend\Rachita.Infrastructure\tmp_build\Rachita.Core.dll
 D:\2026\Rachita\rachita\backend\Rachita.Infrastructure\tmp_build\Rachita.Core.pdb
+D:\2026\Rachita\rachita\backend\Rachita.Infrastructure\obj\Debug\net10.0\Rachita.Infrastructure.sourcelink.json

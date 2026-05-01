@@ -31,10 +31,13 @@ class ClinicalReasoningEngine {
       final sugar = vitals['sugar'];
 
       if (systolic != null && systolic > 140) {
-        if (prescribedMedicines.any((m) => m.toLowerCase().contains('nsaid') || m.toLowerCase().contains('diclofenac'))) {
+        if (prescribedMedicines.any((m) {
+           final gen = MedicalEntityResolver.resolve(m).toLowerCase();
+           return gen == 'ibuprofen' || gen == 'diclofenac' || gen == 'naproxen' || gen == 'celecoxib' || gen.contains('nsaid');
+        })) {
           insights.add(ClinicalInsight(
             title: 'تعارض ضغط الدم مع المسكنات',
-            explanation: 'المريض يعاني من ارتفاع ضغط الدم (${systolic.toInt()}). الـ NSAIDs ترفع الضغط وتؤثر على الكلى.',
+            explanation: 'المريض يعاني من ارتفاع ضغط الدم (${systolic.toInt()}). الـ NSAIDs ترفع الضغط وتؤثر على وظائف الكلى.',
             recommendation: 'استبدل المسكن بـ Paracetamol 1g.',
             severity: InsightSeverity.high,
           ));
@@ -100,17 +103,19 @@ class ClinicalReasoningEngine {
         }
       }
 
-      // فحص الحساسيات المتصالبة (Cross-Sensitivity)
+      // فحص الحساسيات المتصالبة (Cross-Sensitivity) باستخدام الذكاء الجديد (Fuzzy + NLP)
       if (patient.allergies != null && patient.allergies!.isNotEmpty) {
-        if (patient.allergies!.toLowerCase().contains('penicillin') && 
-            (generic.toLowerCase().contains('amoxicillin') || generic.toLowerCase().contains('cefalexin'))) {
-          insights.add(ClinicalInsight(
-            title: 'حساسية متصالبة (Cross-Allergy)',
-            explanation: 'المريض لديه حساسية بنسلين؛ الـ $med ينتمي لنفس العائلة الكيميائية.',
-            recommendation: 'استبدل بـ Azithromycin أو Clarithromycin.',
-            severity: InsightSeverity.high,
-          ));
-          confidenceScore -= 25;
+        final allergyAlerts = MedicalEntityResolver.checkAllergyConflicts(patient.allergies!, [med]);
+        if (allergyAlerts.isNotEmpty) {
+           for (var alert in allergyAlerts) {
+              insights.add(ClinicalInsight(
+                title: 'حساسية متصالبة (Cross-Allergy)',
+                explanation: alert.replaceAll('🛑 حرج: ', ''),
+                recommendation: 'استبدل الدواء ببديل آمن لا ينتمي لنفس العائلة.',
+                severity: InsightSeverity.high,
+              ));
+           }
+           confidenceScore -= 25;
         }
       }
     }

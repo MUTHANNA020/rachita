@@ -25,7 +25,10 @@ import 'package:rachita/features/prescription/presentation/widgets/smart_command
 import 'package:rachita/features/prescription/presentation/widgets/clinical_insight_panel.dart';
 import 'package:rachita/features/prescription/presentation/widgets/live_interaction_panel.dart';
 import 'package:rachita/features/prescription/presentation/providers/drug_interaction_provider.dart';
+import 'package:rachita/features/prescription/presentation/providers/medical_intelligence_providers.dart';
 import 'package:rachita/core/services/smart_voice_command_service.dart';
+import 'package:rachita/core/services/clinical_dosage_calculator.dart';
+import 'dart:ui';
 
 
 
@@ -119,11 +122,23 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
 
   void _addMedicine(MedicineEntity medicine) {
     HapticFeedback.lightImpact();
+    double weight = double.tryParse(_weightCtrl.text) ?? 0.0;
+    String dosage = medicine.commonDose ?? '1';
+    String freq = medicine.commonFreq ?? 'مرة يومياً';
+
+    if (weight > 0) {
+      final calc = ClinicalDosageCalculator.calculatePediatricDose(medicine.nameEn ?? medicine.nameAr, weight);
+      if (calc != null) {
+        dosage = '${calc.calculatedDoseMl} مل (${calc.calculatedDoseMg.toInt()}mg)';
+        freq = calc.frequency;
+      }
+    }
+
     final med = PrescriptionMedicineEntity(
       medicineName: medicine.nameAr,
       medicineNameEn: medicine.nameEn,
-      dosage: medicine.commonDose ?? '1',
-      frequency: medicine.commonFreq ?? 'مرة يومياً',
+      dosage: dosage,
+      frequency: freq,
       duration: '5 أيام',
       routeOfAdmin: 'Oral',
       updatedAt: DateTime.now(),
@@ -229,42 +244,81 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         ],
       ),
       bottomNavigationBar: _buildBottomBar(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.mic_rounded),
-        label: const Text('إملاء صوتي', style: TextStyle(fontWeight: FontWeight.bold)),
-        onPressed: () {
-          // Voice logic integration - Assuming VoiceButton has static/dialog fallback or we can use a bottom sheet
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: Colors.transparent,
-            builder: (c) => Container(
-              padding: const EdgeInsets.all(32),
-              decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('الإملاء الصوتي الذكي', style: TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 24),
-                  VoiceButton(
-                    contextId: 'prescription_entry',
-                    onResult: (text) {
-                      setState(() => _diagnosisController.text += ' ' + text);
-                      _triggerAutoSave();
-                      Navigator.pop(c);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('تحدث بوضوح لتسجيل التشخيص والملاحظات', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  const SizedBox(height: 32),
-                ],
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.4),
+              blurRadius: 24,
+              spreadRadius: 2,
+              offset: const Offset(0, 8),
+            )
+          ]
+        ),
+        child: FloatingActionButton.extended(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          icon: const Icon(Icons.mic_none_rounded, size: 26),
+          label: const Text('المساعد الصوتي الذكي', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5)),
+          onPressed: _openVoiceCopilot,
+        ),
+      ),
+    );
+  }
+
+  void _openVoiceCopilot() {
+    HapticFeedback.heavyImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (c) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? const Color(0xFF1A2236).withOpacity(0.85) 
+                : Colors.white.withOpacity(0.85),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 50)],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+                child: const Icon(Icons.psychology_rounded, size: 48, color: AppColors.primary),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 24),
+              const Text('أتحدث، أنا أستمع...', style: TextStyle(color: AppColors.primary, fontSize: 26, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 12),
+              const Text('يمكنك إملاء التشخيص وعدة أدوية في جملة واحدة\nمثال: "المريض يعاني من التهاب، اصرف اوجمنتين وبروفين"', 
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.5), textAlign: TextAlign.center),
+              const SizedBox(height: 40),
+              VoiceButton(
+                contextId: 'prescription_entry',
+                size: 64,
+                onResult: (text) async {
+                  Navigator.pop(c);
+                  final service = ref.read(smartVoiceCommandServiceProvider);
+                  final results = await service.processBatchCommands(text);
+                  for (final res in results) {
+                    _handleSmartCommand(res);
+                  }
+                },
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -381,11 +435,14 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   Widget _buildMedicineTile(PrescriptionMedicineEntity med, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white, 
-        borderRadius: BorderRadius.circular(16), 
-        border: Border.all(color: AppColors.border),
+        color: Colors.white.withOpacity(0.7), 
+        borderRadius: BorderRadius.circular(24), 
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,18 +450,22 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10), 
-                decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)), 
-                child: const Icon(Icons.medication_outlined, color: AppColors.primary, size: 20)
+                padding: const EdgeInsets.all(12), 
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [AppColors.primaryLight, Colors.white], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10)]
+                ), 
+                child: const Icon(Icons.medication_liquid_rounded, color: AppColors.primary, size: 24)
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: Text(med.medicineName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 16)),
+                child: Text(med.medicineName, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -0.5)),
               ),
-              IconButton(onPressed: () => _removeMedicine(index), icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20)),
+              IconButton(onPressed: () => _removeMedicine(index), icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           // Medicine Details Form
           Row(
             children: [
@@ -412,37 +473,39 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 _medicines[index] = med.copyWith(dosage: val);
                 _triggerAutoSave();
               })),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(child: _medInputField('الوحدة', med.dosageUnit ?? 'ملغ', (val) {
                 _medicines[index] = med.copyWith(dosageUnit: val);
                 _triggerAutoSave();
               })),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(flex: 2, child: _medInputField('التكرار', med.frequency, (val) {
                 _medicines[index] = med.copyWith(frequency: val);
                 _triggerAutoSave();
               })),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(flex: 2, child: _medInputField('المدة', med.duration, (val) {
                 _medicines[index] = med.copyWith(duration: val);
                 _triggerAutoSave();
               })),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(child: _medInputField('وحدة المدة', med.durationUnit ?? 'يوم', (val) {
                 _medicines[index] = med.copyWith(durationUnit: val);
                 _triggerAutoSave();
               })),
             ],
           ),
-          const SizedBox(height: 12),
-          _medInputField('تعليمات إضافية (اختياري)...', med.instructions ?? '', (val) {
-            _medicines[index] = med.copyWith(instructions: val);
-            _triggerAutoSave();
-          }, isFullWidth: true),
+          if (med.instructions != null && med.instructions!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _medInputField('تعليمات إضافية (اختياري)...', med.instructions ?? '', (val) {
+              _medicines[index] = med.copyWith(instructions: val);
+              _triggerAutoSave();
+            }, isFullWidth: true),
+          ]
         ],
       ),
     );
@@ -451,16 +514,16 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
   Widget _medInputField(String label, String initialValue, Function(String) onChanged, {bool isFullWidth = false}) {
     return TextFormField(
       initialValue: initialValue,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w700),
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w800),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.divider)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         filled: true,
-        fillColor: AppColors.surfaceVariant.withOpacity(0.3),
+        fillColor: AppColors.surfaceVariant.withOpacity(0.4),
         isDense: true,
       ),
       onChanged: onChanged,
@@ -652,11 +715,24 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         break;
       case CommandIntent.prescribe:
         if (result.data != null) {
+          String medName = result.data!['medicine_name'] ?? 'دواء غير معروف';
+          String dosage = result.data!['dosage'] ?? '1';
+          String freq = result.data!['frequency'] ?? 'مرة يومياً';
+          
+          double weight = double.tryParse(_weightCtrl.text) ?? 0.0;
+          if (weight > 0 && dosage == '1') {
+            final calc = ClinicalDosageCalculator.calculatePediatricDose(medName, weight);
+            if (calc != null) {
+              dosage = '${calc.calculatedDoseMl} مل (${calc.calculatedDoseMg.toInt()}mg)';
+              freq = calc.frequency;
+            }
+          }
+
           final med = PrescriptionMedicineEntity(
-            medicineName: result.data!['medicine_name'] ?? 'دواء غير معروف',
-            dosage: result.data!['dosage'] ?? '1',
-            frequency: result.data!['frequency'] ?? 'مرة يومياً',
-            duration: '5 أيام',
+            medicineName: medName,
+            dosage: dosage,
+            frequency: freq,
+            duration: result.data!['duration'] ?? '5 أيام',
             routeOfAdmin: 'Oral',
             updatedAt: DateTime.now(),
           );

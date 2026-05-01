@@ -84,40 +84,39 @@ class RiskAssessmentService {
     if (chronicDiseases != null && chronicDiseases.isNotEmpty) {
       final chronic = chronicDiseases.toLowerCase();
 
-      if (chronic.contains('kidney') ||
-          chronic.contains('كلى') ||
-          chronic.contains('renal')) {
+      final hasKidneyDisease = RegExp(r'(كلى|كلوي|kidney|renal|ckd|esrd|nephro)', caseSensitive: false).hasMatch(chronic);
+      final hasLiverDisease = RegExp(r'(كبد|كبدي|liver|hepatic|cirrhosis|hepatitis)', caseSensitive: false).hasMatch(chronic);
+      final hasHeartDisease = RegExp(r'(قلب|قلبي|heart|cardiac|hf|cad|myocardial)', caseSensitive: false).hasMatch(chronic);
+      final hasDiabetes = RegExp(r'(سكر|سكري|diabetes|dm|diabetic)', caseSensitive: false).hasMatch(chronic);
+      final hasAsthma = RegExp(r'(ربو|أزمة|asthma|copd)', caseSensitive: false).hasMatch(chronic);
+
+      if (hasKidneyDisease) {
         riskScore += 18;
         riskFactors.add('مرض كلوي مزمن');
-        recommendations
-            .add('اختبر الكرياتينين و GFR، قلل جرعات الأدوية الكلوية');
+        recommendations.add('اختبر الكرياتينين و GFR، قلل جرعات الأدوية الكلوية');
       }
 
-      if (chronic.contains('liver') ||
-          chronic.contains('كبد') ||
-          chronic.contains('hepatic')) {
+      if (hasLiverDisease) {
         riskScore += 18;
         riskFactors.add('مرض كبدي مزمن');
         recommendations.add('تجنب أدوية سامة للكبد، اختبر وظائف الكبد');
       }
 
-      if (chronic.contains('heart') ||
-          chronic.contains('قلب') ||
-          chronic.contains('cardiac')) {
+      if (hasHeartDisease) {
         riskScore += 15;
         riskFactors.add('مرض قلبي مزمن');
         recommendations.add('تجنب NSAIDs، راقب ضغط الدم');
       }
 
-      if (chronic.contains('diabetes') || chronic.contains('سكري')) {
+      if (hasDiabetes) {
         riskScore += 12;
         riskFactors.add('داء السكري');
         recommendations.add('راقب السكر، تجنب الستيرويدات');
       }
 
-      if (chronic.contains('asthma') || chronic.contains('ربو')) {
+      if (hasAsthma) {
         riskScore += 10;
-        riskFactors.add('الربو');
+        riskFactors.add('أمراض الجهاز التنفسي / الربو');
         recommendations.add('تجنب بيتا بلوكرز، اختر مسكنات آمنة');
       }
     }
@@ -126,21 +125,25 @@ class RiskAssessmentService {
     if (allergies != null && allergies.isNotEmpty) {
       final allergyList = allergies.toLowerCase();
 
-      if (allergyList.contains('penicillin')) {
+      final hasPenicillinAllergy = RegExp(r'(penicillin|بنسلين|بنيسيلين)', caseSensitive: false).hasMatch(allergyList);
+      final hasNsaidAllergy = RegExp(r'(nsaid|مسكنات|ibuprofen|diclofenac)', caseSensitive: false).hasMatch(allergyList);
+      final hasSulfaAllergy = RegExp(r'(sulfa|سلفا)', caseSensitive: false).hasMatch(allergyList);
+
+      if (hasPenicillinAllergy) {
         riskScore += 15;
-        riskFactors.add('حساسية البنسلين');
+        riskFactors.add('حساسية البنسلين (عائلة البيتا لاكتام)');
         recommendations.add('تجنب البنسلين والسيفالوسبورينات، استخدم بدائل');
       }
 
-      if (allergyList.contains('nsaid')) {
+      if (hasNsaidAllergy) {
         riskScore += 12;
-        riskFactors.add('حساسية NSAIDs');
+        riskFactors.add('حساسية المسكنات (NSAIDs)');
         recommendations.add('استخدم باراسيتامول أو كوكسيبات بدلاً منها');
       }
 
-      if (allergyList.contains('sulfa')) {
+      if (hasSulfaAllergy) {
         riskScore += 10;
-        riskFactors.add('حساسية السلفوناميد');
+        riskFactors.add('حساسية السلفوناميد (Sulfa)');
         recommendations.add('تجنب TMP-SMX والأدوية التي تحتوي على الكبريت');
       }
     }

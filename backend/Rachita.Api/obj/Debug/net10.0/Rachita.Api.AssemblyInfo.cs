@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Rachita.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2fafd6b962a37b10a7e50fcfda218cfe75aa0b2e")]
 [assembly: System.Reflection.AssemblyProductAttribute("Rachita.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Rachita.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

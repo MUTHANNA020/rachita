@@ -11,6 +11,8 @@ import '../../../../core/services/clinical_reasoning_engine.dart';
 
 
 
+import '../../../../core/services/smart_voice_command_service.dart';
+
 // ============================================
 // 🏥 Riverpod Providers للخدمات الطبية
 // ============================================
@@ -45,6 +47,12 @@ final clinicalReasoningEngineProvider = Provider<ClinicalReasoningEngine>((ref) 
 final hybridSuggestionEngineProvider = Provider<HybridSuggestionEngine>((ref) {
   final dynamicService = ref.watch(dynamicClinicalServiceProvider);
   return HybridSuggestionEngine(dynamicService);
+});
+
+/// 🎙️ Provider لمحرك الأوامر الصوتية الذكية
+final smartVoiceCommandServiceProvider = Provider<SmartVoiceCommandService>((ref) {
+  final dynamicService = ref.watch(dynamicClinicalServiceProvider);
+  return SmartVoiceCommandService(dynamicService);
 });
 
 
@@ -178,7 +186,7 @@ final alertStatisticsProvider = Provider<AlertStatistics>((ref) {
 
 /// 📉 إحصائيات التفاعلات الدوائية
 final interactionStatisticsProvider =
-    Provider.family<InteractionStatistics, List<String>>((ref, medicines) {
+    FutureProvider.family<InteractionStatistics, List<String>>((ref, medicines) async {
   final service = ref.watch(drugInteractionServiceProvider);
   return service.getStatistics(medicines);
 });

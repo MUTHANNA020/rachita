@@ -41,6 +41,8 @@ class DatabaseHelper {
     if (kIsWeb) {
       databaseFactory = databaseFactoryFfiWeb;
       path = filePath;
+    } else if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      path = inMemoryDatabasePath; // لتجنب أخطاء مسارات الملفات أثناء تشغيل الاختبارات
     } else {
       final dbPath = await getApplicationDocumentsDirectory();
       path = join(dbPath.path, filePath);

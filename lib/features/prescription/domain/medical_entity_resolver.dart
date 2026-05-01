@@ -1,6 +1,5 @@
 import 'services/dynamic_medical_intelligence_service.dart';
-
-/// 🧠 المترجم الطبي الذكي - Medical Entity Resolver
+import '../../../../core/utils/string_matching.dart';/// 🧠 المترجم الطبي الذكي - Medical Entity Resolver
 
 /// 
 /// يحل مشكلة "الاسم التجاري مقابل الاسم العلمي" بشكل جذري.
@@ -355,7 +354,19 @@ class MedicalEntityResolver {
   /// تحويل أي اسم دواء إلى المادة الفعالة العلمية
   static String resolve(String drugName) {
     final normalized = drugName.trim().toLowerCase();
-    return _brandToGeneric[normalized] ?? normalized;
+    
+    // المطابقة التامة أولاً (الأسرع)
+    if (_brandToGeneric.containsKey(normalized)) {
+      return _brandToGeneric[normalized]!;
+    }
+    
+    // البحث التقريبي (Fuzzy Matching) باستخدام مسافة ليفنشتاين بنسبة تشابه 75% فأكثر
+    final bestMatch = StringMatching.findBestMatch(normalized, _brandToGeneric.keys, threshold: 0.75);
+    if (bestMatch != null) {
+      return _brandToGeneric[bestMatch]!;
+    }
+    
+    return normalized;
   }
 
   // ─── طريقة: فحص الدواء المحظور أثناء الحمل ──────────────────────────────────
@@ -420,49 +431,57 @@ class MedicalEntityResolver {
   }
 
   // ─── طريقة: فحص الحساسية من مجموعة الأدوية ──────────────────────────────────
-  /// يفحص هل الأدوية المقررة تحتوي على مادة يحسّ منها المريض
+  /// يفحص هل الأدوية المقررة تحتوي على مادة يحسس منها المريض مع دعم التقاطع التحسسي
   static List<String> checkAllergyConflicts(
       String allergies, List<String> medicines) {
     final alerts = <String>[];
     final allergyLower = allergies.toLowerCase();
 
+    // خريطة التقاطع التحسسي (Cross-Reactivity Map) الموسعة
+    final crossReactivity = {
+      'penicillin': ['amoxicillin', 'ampicillin', 'penicillin', 'flucloxacillin', 'cefalexin', 'cefuroxime', 'ceftriaxone', 'cefotaxime', 'cephalosporin'],
+      'بنسلين': ['amoxicillin', 'ampicillin', 'penicillin', 'flucloxacillin', 'cefalexin', 'cefuroxime', 'ceftriaxone', 'cefotaxime', 'cephalosporin'],
+      'بنيسيلين': ['amoxicillin', 'ampicillin', 'penicillin', 'flucloxacillin', 'cefalexin', 'cefuroxime', 'ceftriaxone', 'cefotaxime', 'cephalosporin'],
+      'nsaid': ['ibuprofen', 'diclofenac', 'naproxen', 'aspirin', 'ketoprofen', 'meloxicam', 'celecoxib'],
+      'مسكنات': ['ibuprofen', 'diclofenac', 'naproxen', 'aspirin', 'ketoprofen', 'meloxicam', 'celecoxib'],
+      'sulfa': ['sulfamethoxazole', 'sulfasalazine', 'celecoxib', 'furosemide'],
+      'سلفا': ['sulfamethoxazole', 'sulfasalazine', 'celecoxib', 'furosemide'],
+    };
+
+    // استخراج الحساسيات باستخدام Fuzzy Matcher (لكي نكتشف الأخطاء الإملائية مثل "بنسيلين")
+    List<String> patientAllergies = allergyLower.split(RegExp(r'[\s,،\n]+')).where((e) => e.length > 2).toList();
+    List<String> matchedAllergyGroups = [];
+
+    for (var word in patientAllergies) {
+       final bestMatch = StringMatching.findBestMatch(word, crossReactivity.keys, threshold: 0.8);
+       if (bestMatch != null) {
+           matchedAllergyGroups.add(bestMatch);
+       } else {
+           matchedAllergyGroups.add(word); // نضيفها كما هي لو لم نجد تقاطع تحسسي لها
+       }
+    }
+
     for (final med in medicines) {
       final generic = resolve(med);
 
-      // فحص حساسية البنسلين - الأكثر شيوعاً
-      if (allergyLower.contains('penicillin') ||
-          allergyLower.contains('بنسلين') ||
-          allergyLower.contains('بنيسيلين')) {
-        if (generic.contains('amoxicillin') ||
-            generic.contains('ampicillin') ||
-            generic.contains('penicillin') ||
-            generic.contains('flucloxacillin')) {
-          alerts.add(
-              '🛑 حرج: $med (${generic}) ينتمي لمجموعة البنسلين - المريض لديه حساسية من البنسلين!');
-        }
-      }
-
-      // فحص حساسية NSAIDs
-      if (allergyLower.contains('nsaid') ||
-          allergyLower.contains('ibuprofen') ||
-          allergyLower.contains('diclofenac')) {
-        if (generic == 'ibuprofen' ||
-            generic == 'diclofenac' ||
-            generic == 'naproxen' ||
-            generic == 'aspirin') {
-          alerts.add('⚠️ تحذير: $med ينتمي لمجموعة NSAIDs - لدى المريض حساسية!');
-        }
-      }
-
-      // فحص حساسية الكبريت/السلفا
-      if (allergyLower.contains('sulfa') || allergyLower.contains('سلفا')) {
-        if (generic.contains('sulfamethoxazole') || generic.contains('sulfa')) {
-          alerts.add('⚠️ تحذير: $med يحتوي على السلفا - لدى المريض حساسية!');
-        }
+      for (var allergy in matchedAllergyGroups) {
+          if (crossReactivity.containsKey(allergy)) {
+             final conflictedDrugs = crossReactivity[allergy]!;
+             final drugMatch = StringMatching.findBestMatch(generic, conflictedDrugs, threshold: 0.85);
+             if (drugMatch != null) {
+                 alerts.add('🛑 حرج: المريض يعاني من حساسية تجاه ($allergy)، والدواء $med ($generic) ينتمي لنفس العائلة أو يتقاطع معها!');
+             }
+          } else {
+             // فحص مباشر (إذا كان اسم الدواء هو نفسه الحساسية)
+             if (StringMatching.similarity(generic, allergy) >= 0.85) {
+                 alerts.add('🛑 حرج: الدواء الموصوف $med مطابق للحساسية المسجلة للمريض ($allergy)!');
+             }
+          }
       }
     }
 
-    return alerts;
+    // إزالة التكرار
+    return alerts.toSet().toList();
   }
 }
 

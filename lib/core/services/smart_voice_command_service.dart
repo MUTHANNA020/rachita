@@ -52,60 +52,86 @@ class SmartVoiceCommandService {
     'شهر': '30 يوم',
   };
 
-  /// تحليل النص الصوتي واستخراج القصد (Intent)
+  /// تحليل النص الصوتي واستخراج הקصد (Intent) القديم (للحفاظ على التوافق)
   Future<SmartCommandResult> processCommand(String rawText) async {
+      final results = await processBatchCommands(rawText);
+      if (results.isNotEmpty) return results.first;
+      return SmartCommandResult(intent: CommandIntent.dictation, data: {'text': rawText});
+  }
+
+  /// 🚀 MASSIVE UPGRADE: المعالجة الموازية للأوامر (Batch Processing)
+  /// يسمح بإدخال أوامر متعددة في جملة واحدة (تشخيص + عدة أدوية + حفظ)
+  Future<List<SmartCommandResult>> processBatchCommands(String rawText) async {
     final normalized = MedicalSpeechNormalizer.normalize(rawText);
     final lower = normalized.toLowerCase();
+    final results = <SmartCommandResult>[];
 
     // 1. مسح الوصفة
     if (_clearKw.any(lower.contains)) {
-      return SmartCommandResult(intent: CommandIntent.clear, message: 'تم مسح الوصفة');
+      results.add(SmartCommandResult(intent: CommandIntent.clear, message: 'تم مسح الوصفة'));
+      return results; // التوقف إذا كان الأمر هو مسح الكل
     }
 
-    // 2. طباعة / حفظ
-    if (_printKw.any(lower.contains)) {
-      return SmartCommandResult(intent: CommandIntent.print, message: 'جاري تجهيز الطباعة...');
-    }
-    if (_saveKw.any(lower.contains)) {
-      return SmartCommandResult(intent: CommandIntent.save, message: 'جاري حفظ الوصفة...');
-    }
-
-    // 3. وصف دواء — يستخدم NLP Parser الجديد
-    if (_prescribeKw.any(lower.contains)) {
-      final parsed = await _parsePrescriptionCommand(normalized);
-      if (parsed['medicine_name'] != null) {
-        return SmartCommandResult(
-          intent: CommandIntent.prescribe,
-          data: parsed,
-          message: 'تمت إضافة: ${parsed['medicine_name']} ${parsed['dosage'] ?? ''}',
-        );
-      }
-      // fallback للخدمة الديناميكية إذا فشل المحلل الهيكلي
-      try {
-        final dynamicParsed = await _dynamicService.processVoiceCommand(normalized);
-        return SmartCommandResult(
-          intent: CommandIntent.prescribe,
-          data: dynamicParsed,
-          message: 'تمت إضافة الدواء: ${dynamicParsed['medicine_name']}',
-        );
-      } catch (_) {}
-    }
-
-    // 4. تشخيص
+    // 2. استخراج التشخيص بذكاء
     if (_diagnoseKw.any(lower.contains)) {
       final diagnosis = _extractDiagnosis(normalized);
-      return SmartCommandResult(
-        intent: CommandIntent.diagnose,
-        data: {'diagnosis': diagnosis},
-        message: 'التشخيص: $diagnosis',
-      );
+      if (diagnosis.isNotEmpty) {
+        results.add(SmartCommandResult(
+          intent: CommandIntent.diagnose,
+          data: {'diagnosis': diagnosis},
+          message: 'التشخيص: $diagnosis',
+        ));
+      }
     }
 
-    // 5. افتراضي: إملاء نصي
-    return SmartCommandResult(
-      intent: CommandIntent.dictation,
-      data: {'text': normalized},
-    );
+    // 3. 🧠 الاستخراج الشامل للأدوية المتعددة
+    final parsedMeds = MedicalSpeechNormalizer.extractMultipleMedicines(normalized);
+    
+    // إذا لم تكتشف الدالة السابقة أي دواء، نستخدم fallback الديناميكي
+    if (parsedMeds.isEmpty && _prescribeKw.any(lower.contains)) {
+        try {
+            final dynamicParsed = await _dynamicService.processVoiceCommand(normalized);
+            if (dynamicParsed['medicine_name'] != null) {
+                results.add(SmartCommandResult(
+                    intent: CommandIntent.prescribe,
+                    data: dynamicParsed,
+                    message: 'تمت إضافة الدواء ديناميكياً: ${dynamicParsed['medicine_name']}',
+                ));
+            }
+        } catch (_) {}
+    } else {
+        for (final med in parsedMeds) {
+            results.add(SmartCommandResult(
+                intent: CommandIntent.prescribe,
+                data: {
+                    'medicine_name': med.name,
+                    'dosage': med.dosage,
+                    'dosage_unit': med.dosageUnit,
+                    'frequency': med.frequency,
+                    'duration': med.duration,
+                },
+                message: 'تمت إضافة: ${med.name} ${med.dosage} ${med.dosageUnit}',
+            ));
+        }
+    }
+
+    // 4. أوامر الحفظ والطباعة
+    if (_printKw.any(lower.contains)) {
+      results.add(SmartCommandResult(intent: CommandIntent.print, message: 'جاري تجهيز الطباعة...'));
+    } else if (_saveKw.any(lower.contains)) {
+      results.add(SmartCommandResult(intent: CommandIntent.save, message: 'جاري حفظ الوصفة...'));
+    }
+
+    // 5. إذا لم نجد أي أوامر (تشخيص أو أدوية)، نعتبره إملاء حر للملاحظات
+    if (results.isEmpty) {
+      results.add(SmartCommandResult(
+        intent: CommandIntent.dictation,
+        data: {'text': rawText},
+        message: 'إملاء حر',
+      ));
+    }
+
+    return results;
   }
 
   /// 🧠 NLP Parser للأوامر الطبية

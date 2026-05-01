@@ -80,17 +80,17 @@ final safetyReportProvider = Provider<SafetyReport>((ref) {
         } catch (_) {}
 
         // فحص التفاعلات بين كل الأدوية
-        final interactions = service.checkMultipleInteractions(allMeds);
+        final interactions = MedicalEntityResolver.checkAllInteractions(allMeds);
         for (final interaction in interactions) {
-          if (interaction.severity == InteractionSeverity.critical) {
+          if (interaction.severity == 'Critical') {
             errors.add(
-                '${interaction.drug1} ↔ ${interaction.drug2}: ${interaction.description ?? "تفاعل حرج"}');
-          } else if (interaction.severity == InteractionSeverity.high) {
+                '${interaction.drug1} ↔ ${interaction.drug2}: ${interaction.description}');
+          } else if (interaction.severity == 'High') {
             warnings.add(
-                '${interaction.drug1} ↔ ${interaction.drug2}: ${interaction.description ?? "تفاعل مرتفع"}');
-          } else if (interaction.severity == InteractionSeverity.moderate) {
+                '${interaction.drug1} ↔ ${interaction.drug2}: ${interaction.description}');
+          } else if (interaction.severity == 'Moderate') {
             warnings.add(
-                '${interaction.drug1} + ${interaction.drug2}: ${interaction.description ?? "تفاعل معتدل"}');
+                '${interaction.drug1} + ${interaction.drug2}: ${interaction.description}');
           }
         }
       }
@@ -121,14 +121,17 @@ final safetyReportProvider = Provider<SafetyReport>((ref) {
 
       // ─── 4. فحص Renal/Hepatic Dosing ───────────────────────────────────────
       final chronicLower = (patient.chronicDiseases ?? '').toLowerCase();
+      
+      // تحليل الأمراض المزمنة بذكاء (NLP Regex)
+      final hasKidneyDisease = RegExp(r'(كلى|كلوي|kidney|renal|ckd|esrd|nephro)', caseSensitive: false).hasMatch(chronicLower);
+      final hasLiverDisease = RegExp(r'(كبد|كبدي|liver|hepatic|cirrhosis|hepatitis)', caseSensitive: false).hasMatch(chronicLower);
+
       if (prescription.medicines != null) {
         for (final med in prescription.medicines!) {
           final generic = MedicalEntityResolver.resolve(med.medicineName).toLowerCase();
 
           // مرضى الكلى — أدوية تُطرح كلوياً
-          if (chronicLower.contains('كلى') ||
-              chronicLower.contains('kidney') ||
-              chronicLower.contains('renal')) {
+          if (hasKidneyDisease) {
             const renalRisk = [
               'metformin', 'nsaid', 'ibuprofen', 'diclofenac',
               'naproxen', 'ciprofloxacin', 'vancomycin', 'gentamicin'
@@ -139,9 +142,7 @@ final safetyReportProvider = Provider<SafetyReport>((ref) {
           }
 
           // مرضى الكبد — أدوية تتحلل كبدياً
-          if (chronicLower.contains('كبد') ||
-              chronicLower.contains('liver') ||
-              chronicLower.contains('hepatic')) {
+          if (hasLiverDisease) {
             const hepaticRisk = [
               'paracetamol', 'acetaminophen', 'methotrexate', 'statins',
               'atorvastatin', 'simvastatin', 'isoniazid', 'rifampicin'

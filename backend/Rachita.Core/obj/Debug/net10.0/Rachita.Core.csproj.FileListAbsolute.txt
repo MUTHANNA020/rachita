@@ -12,3 +12,4 @@ D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\ref\Rachita.Core.
 D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.deps.json
 D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.dll
 D:\2026\Rachita\rachita\backend\Rachita.Core\tmp_build\Rachita.Core.pdb
+D:\2026\Rachita\rachita\backend\Rachita.Core\obj\Debug\net10.0\Rachita.Core.sourcelink.json

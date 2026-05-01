@@ -317,3 +317,4 @@ D:\2026\Rachita\rachita\backend\Rachita.Api\bin\Debug\net10.0\tmp_build\Rachita.
 D:\2026\Rachita\rachita\backend\Rachita.Api\bin\Debug\net10.0\tmp_build\Rachita.Api.staticwebassets.endpoints.json
 D:\2026\Rachita\rachita\backend\Rachita.Api\bin\Debug\net10.0\tmp_build\Rachita.Api.staticwebassets.runtime.json
 D:\2026\Rachita\rachita\backend\Rachita.Api\obj\Debug\net10.0\compressed\za7sb4ikqp-{0}-6cg1va85pq-6cg1va85pq.gz
+D:\2026\Rachita\rachita\backend\Rachita.Api\obj\Debug\net10.0\Rachita.Api.sourcelink.json
