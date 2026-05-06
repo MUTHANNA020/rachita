@@ -61,13 +61,18 @@ class ClinicalReasoningEngine {
     // 2. استنتاج دلالي للأدوية (Semantic Drug Reasoning)
     // ندمج الأدوية الجديدة مع الأدوية الحالية للمريض لفحص التفاعلات
     final allMeds = [...prescribedMedicines];
-    try {
-      final currentMeds = (jsonDecode(patient.currentMedicationsJson) as List)
-          .map((m) => (m['name'] ?? m['medicineName'] ?? '').toString())
-          .where((name) => name.isNotEmpty)
-          .toList();
-      allMeds.addAll(currentMeds);
-    } catch (_) {}
+    final currentMedsJson = patient.currentMedicationsJson;
+    if (currentMedsJson.isNotEmpty && currentMedsJson.trim() != '') {
+      try {
+        final currentMeds = (jsonDecode(currentMedsJson) as List)
+            .map((m) => (m['name'] ?? m['medicineName'] ?? '').toString())
+            .where((name) => name.isNotEmpty)
+            .toList();
+        allMeds.addAll(currentMeds);
+      } catch (_) {
+        // Log or handle malformed JSON if needed
+      }
+    }
 
     for (var med in prescribedMedicines) {
       final generic = await _dynamicService.resolveDrugName(med);

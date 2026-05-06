@@ -31,6 +31,9 @@ dependencies:
   http: ^1.6.0
   uuid: ^4.0.0
   animations: ^2.0.11
+  flutter_local_notifications: ^20.1.0
+  timezone: ^0.10.1
+  flutter_timezone: ^5.0.2
 
 dev_dependencies:
   flutter_test:

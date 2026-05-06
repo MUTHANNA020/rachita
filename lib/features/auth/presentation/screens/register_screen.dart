@@ -33,15 +33,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (_clinicNameController.text.isEmpty ||
-        _fullNameController.text.isEmpty ||
-        _usernameController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+    if (_clinicNameController.text.trim().isEmpty ||
+        _fullNameController.text.trim().isEmpty ||
+        _usernameController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
       _showError('يرجى ملء الحقول الأساسية');
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
+    if (_passwordController.text.trim() != _confirmPasswordController.text.trim()) {
       _showError('كلمات المرور غير متطابقة');
       return;
     }
@@ -51,10 +51,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       final success = await authRepo.register(
-        _clinicNameController.text,
-        _fullNameController.text,
-        _usernameController.text,
-        _passwordController.text,
+        _clinicNameController.text.trim(),
+        _fullNameController.text.trim(),
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
       );
 
       if (mounted) {
@@ -101,8 +101,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
-                border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)],
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
               ),
               child: Column(
                 children: [
@@ -159,7 +159,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         filled: true,
-        fillColor: AppColors.background.withOpacity(0.5),
+        fillColor: AppColors.background.withValues(alpha: 0.5),
       ),
     );
   }

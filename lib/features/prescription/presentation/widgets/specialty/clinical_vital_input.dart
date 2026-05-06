@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rachita/shared/theme/app_colors.dart';
 import 'package:rachita/core/utils/clinical_logic.dart';
+import 'package:rachita/shared/widgets/voice_button.dart';
 
 class ClinicalVitalInput extends StatelessWidget {
   final String label;
@@ -122,6 +123,18 @@ class ClinicalVitalInput extends StatelessWidget {
                 isDense: true,
                 hintText: '--',
                 hintStyle: TextStyle(color: AppColors.textMuted.withOpacity(0.5)),
+                suffixIcon: VoiceButton(
+                  contextId: label,
+                  size: 24,
+                  onResult: (text) {
+                    // Extract number from text
+                    final numberMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(text);
+                    if (numberMatch != null) {
+                      controller.text = numberMatch.group(1)!;
+                      onChanged();
+                    }
+                  },
+                ),
               ),
               onChanged: (_) => onChanged(),
             ),

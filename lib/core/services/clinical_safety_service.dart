@@ -69,15 +69,17 @@ final safetyReportProvider = Provider<SafetyReport>((ref) {
 
         // إضافة الأدوية الحالية للمريض من سجله
         final allMeds = [...newMedNames];
-        try {
-          final currentMeds =
-              (jsonDecode(patient.currentMedicationsJson) as List)
-                  .map(
-                      (m) => (m['name'] ?? m['medicineName'] ?? '').toString())
-                  .where((n) => n.isNotEmpty)
-                  .toList();
-          allMeds.addAll(currentMeds);
-        } catch (_) {}
+        final currentMedsJson = patient.currentMedicationsJson;
+        if (currentMedsJson.trim().isNotEmpty) {
+          try {
+            final currentMeds = (jsonDecode(currentMedsJson) as List)
+                .map((m) =>
+                    (m['name'] ?? m['medicineName'] ?? '').toString())
+                .where((n) => n.isNotEmpty)
+                .toList();
+            allMeds.addAll(currentMeds);
+          } catch (_) {}
+        }
 
         // فحص التفاعلات بين كل الأدوية
         final interactions = MedicalEntityResolver.checkAllInteractions(allMeds);

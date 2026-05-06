@@ -60,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, spreadRadius: 5)],
+            boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 5)],
           ),
           child: const Icon(Icons.emergency_rounded, size: 60, color: AppColors.primary),
         ),
@@ -85,8 +85,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))],
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 10))],
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
       ),
       child: Form(
         key: _formKey,
@@ -133,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.redAccent.withOpacity(0.1))),
+                decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.redAccent.withValues(alpha: 0.1))),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 20),
@@ -179,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             obscureText: isPassword,
             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: AppColors.primary.withOpacity(0.5), size: 20),
+              prefixIcon: Icon(icon, color: AppColors.primary.withValues(alpha: 0.5), size: 20),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               hintText: 'أدخل $label...',
@@ -193,7 +193,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).login(_usernameController.text, _passwordController.text);
+      ref.read(authProvider.notifier).login(
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
+      );
     }
   }
 }

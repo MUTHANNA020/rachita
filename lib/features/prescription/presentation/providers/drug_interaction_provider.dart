@@ -31,9 +31,10 @@ final liveInteractionCheckProvider = FutureProvider<LiveInteractionReport>((ref)
   final patientAsync = ref.watch(patientByIdProvider(prescription.patientId));
   final allMeds = [...medicines];
   
-  if (patientAsync.value != null && patientAsync.value!.currentMedicationsJson.isNotEmpty) {
+  final currentMedsJson = patientAsync.value?.currentMedicationsJson;
+  if (currentMedsJson != null && currentMedsJson.trim().isNotEmpty) {
     try {
-      final currentMeds = (jsonDecode(patientAsync.value!.currentMedicationsJson) as List)
+      final currentMeds = (jsonDecode(currentMedsJson) as List)
           .map((m) => (m['name'] ?? m['medicineName'] ?? '').toString())
           .where((n) => n.isNotEmpty)
           .toList();
@@ -65,13 +66,16 @@ final liveRiskAssessmentProvider = Provider<PatientRiskAssessment?>((ref) {
 
       // بناء قائمة الأدوية الكاملة
       final meds = prescription.medicines?.map((m) => m.medicineName).toList() ?? [];
-      try {
-        final currentMeds = (jsonDecode(patient.currentMedicationsJson) as List)
-            .map((m) => (m['name'] ?? m['medicineName'] ?? '').toString())
-            .where((n) => n.isNotEmpty)
-            .toList();
-        meds.addAll(currentMeds);
-      } catch (_) {}
+      final currentMedsJson = patient.currentMedicationsJson;
+      if (currentMedsJson.trim().isNotEmpty) {
+        try {
+          final currentMeds = (jsonDecode(currentMedsJson) as List)
+              .map((m) => (m['name'] ?? m['medicineName'] ?? '').toString())
+              .where((n) => n.isNotEmpty)
+              .toList();
+          meds.addAll(currentMeds);
+        } catch (_) {}
+      }
 
       return service.assessPatientRisk(
         age: patient.age,

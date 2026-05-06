@@ -19,9 +19,13 @@ class MedicationListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<dynamic> medications = [];
-    try {
-      medications = jsonDecode(jsonList);
-    } catch (_) {}
+    if (jsonList.trim().isNotEmpty) {
+      try {
+        medications = jsonDecode(jsonList);
+      } catch (_) {
+        // Silently fail or log malformed JSON
+      }
+    }
 
     if (medications.isEmpty) {
       return Container(

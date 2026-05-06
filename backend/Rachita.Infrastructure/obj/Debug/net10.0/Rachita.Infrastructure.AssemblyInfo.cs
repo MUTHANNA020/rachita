@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Rachita.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2fafd6b962a37b10a7e50fcfda218cfe75aa0b2e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b65ae37bc880298a926ef4662995bb59fac5f4db")]
 [assembly: System.Reflection.AssemblyProductAttribute("Rachita.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Rachita.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

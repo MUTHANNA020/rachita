@@ -32,19 +32,24 @@ class ClinicalRiskCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(riskData['icon'], color: riskColor, size: 24),
-                  const SizedBox(width: 12),
-                  Text(
-                    'تقييم المخاطر السريرية',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: riskColor,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(riskData['icon'], color: riskColor, size: 24),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        'تقييم المخاطر السريرية',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: riskColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

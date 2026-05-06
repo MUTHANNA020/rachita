@@ -1,5 +1,5 @@
 class DBConstants {
-  static const int version = 21; // تحديث لقاعدة البيانات لإضافة الطول ومحيط الرأس
+  static const int version = 23; // إضافة جداول Audit Trail و Medication Reminders
   static const String databaseName = 'clinic_smart_v2.db';
 
   // Tables - Original
@@ -18,4 +18,8 @@ class DBConstants {
   static const String tablePatientRiskProfiles = 'patient_risk_profiles';
   static const String tableMedicationTemplates = 'medication_templates';
   static const String tableClinicalAlerts = 'clinical_alerts';
+
+  // Tables - 🔐 Audit & Reminders
+  static const String tableAuditLog = 'audit_log';
+  static const String tableMedicationReminders = 'medication_reminders';
 }

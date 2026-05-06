@@ -28,6 +28,8 @@ import 'package:rachita/features/prescription/presentation/providers/drug_intera
 import 'package:rachita/features/prescription/presentation/providers/medical_intelligence_providers.dart';
 import 'package:rachita/core/services/smart_voice_command_service.dart';
 import 'package:rachita/core/services/clinical_dosage_calculator.dart';
+import 'package:rachita/core/services/audit_service.dart';
+import 'package:rachita/core/services/medication_reminder_service.dart';
 import 'dart:ui';
 
 
@@ -250,7 +252,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
+              color: AppColors.primary.withValues(alpha: 0.4),
               blurRadius: 24,
               spreadRadius: 2,
               offset: const Offset(0, 8),
@@ -281,11 +283,11 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
             color: Theme.of(context).brightness == Brightness.dark 
-                ? const Color(0xFF1A2236).withOpacity(0.85) 
-                : Colors.white.withOpacity(0.85),
+                ? const Color(0xFF1A2236).withValues(alpha: 0.85) 
+                : Colors.white.withValues(alpha: 0.85),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
-            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 50)],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+            boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.15), blurRadius: 50)],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -359,7 +361,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                         if (p.allergies?.isNotEmpty ?? false) 
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                             child: Row(
                               children: [
                                 const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 14),
@@ -372,7 +374,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                         if (p.chronicDiseases?.isNotEmpty ?? false)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                            decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                             child: Row(
                               children: [
                                 const Icon(Icons.medical_services_outlined, color: Colors.orange, size: 14),
@@ -422,8 +424,22 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: AppColors.textMuted),
-          prefixIcon: Icon(icon, color: AppColors.primary.withOpacity(0.5), size: 20),
-          suffixIcon: suffix,
+          prefixIcon: Icon(icon, color: AppColors.primary.withValues(alpha: 0.5), size: 20),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (suffix != null) suffix,
+              VoiceButton(
+                contextId: hint,
+                size: 32,
+                onResult: (text) {
+                  ctrl.text = isMuted ? text : (ctrl.text + ' ' + text).trim();
+                  _triggerAutoSave();
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
@@ -437,11 +453,11 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7), 
+        color: Colors.white.withValues(alpha: 0.7), 
         borderRadius: BorderRadius.circular(24), 
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4))
+          BoxShadow(color: AppColors.primary.withValues(alpha: 0.04), blurRadius: 20, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
@@ -454,7 +470,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: [AppColors.primaryLight, Colors.white], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10)]
+                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 10)]
                 ), 
                 child: const Icon(Icons.medication_liquid_rounded, color: AppColors.primary, size: 24)
               ),
@@ -523,7 +539,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
         filled: true,
-        fillColor: AppColors.surfaceVariant.withOpacity(0.4),
+        fillColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
         isDense: true,
       ),
       onChanged: onChanged,
@@ -580,6 +596,29 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     final actionNotifier = ref.read(prescriptionActionProvider);
     await actionNotifier.savePrescription(entity);
 
+    // 🔐 Audit Log
+    ref.read(auditServiceProvider).logAction(
+      action: 'PRESCRIPTION_SAVED',
+      userId: doctor.id.toString(),
+      entityType: 'prescription',
+      entityId: entity.id?.toString(),
+      details: 'التشخيص: ${entity.diagnosis}, عدد الأدوية: ${_medicines.length}',
+    );
+
+    // 🔔 Medication Reminders
+    final reminderService = ref.read(medicationReminderServiceProvider);
+    for (final med in _medicines) {
+      // Schedule at 8:00 AM by default if no specific time logic exists yet
+      // In a real app, you might parse "frequency" to set multiple times
+      await reminderService.scheduleReminder(
+        patientId: _selectedPatientId,
+        patientName: patient.name,
+        medicineName: med.medicineName,
+        time: '08:00', // Default dose time
+        prescriptionId: entity.id,
+      );
+    }
+
     if (mounted) {
       await PdfPrescriptionService.generateAndPrint(
         doctor: doctor,
@@ -617,7 +656,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     return Container(
       height: 100,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      decoration: BoxDecoration(color: Colors.white, border: const Border(top: BorderSide(color: AppColors.divider)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))]),
+      decoration: BoxDecoration(color: Colors.white, border: const Border(top: BorderSide(color: AppColors.divider)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))]),
       child: Row(
         children: [
           Expanded(
@@ -643,9 +682,9 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -661,7 +700,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
                 ),
                 Text(
                   isError ? safety.errors.first : (safety.warnings.isNotEmpty ? safety.warnings.first : 'يرجى مراجعة الجرعات والمؤشرات.'),
-                  style: TextStyle(color: color.withOpacity(0.8), fontSize: 12),
+                  style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12),
                 ),
               ],
             ),
@@ -766,7 +805,7 @@ class _NewPrescriptionScreenState extends ConsumerState<NewPrescriptionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         border: const Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(

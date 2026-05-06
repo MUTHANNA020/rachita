@@ -21,6 +21,7 @@ import 'package:rachita/features/sync/presentation/screens/sync_and_backup_scree
 import 'package:rachita/features/account/presentation/screens/account_management_screen.dart';
 import 'package:rachita/shared/widgets/responsive_wrapper.dart';
 import 'package:rachita/shared/providers/navigation_provider.dart';
+import 'package:rachita/core/services/medication_reminder_service.dart';
 import 'package:animations/animations.dart';
 
 void main() async {
@@ -37,12 +38,19 @@ void main() async {
   ]);
 
   final prefs = results[1] as SharedPreferences;
+  
+  // Initialize Services
+  final container = ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+    ],
+  );
+  
+  await container.read(medicationReminderServiceProvider).init();
 
   runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const MyApp(),
     ),
   );
@@ -212,7 +220,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? (isDark ? Colors.white.withOpacity(0.1) : AppColors.primaryLight) : Colors.transparent,
+          color: isSelected ? (isDark ? Colors.white.withValues(alpha: 0.1) : AppColors.primaryLight) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -279,15 +287,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     return Container(
       height: 70 + bottomPadding,
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+        color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
       ),
       child: Stack(
         children: [
           // Glass Background Layer
           ClipRect(
             child: BackdropFilter(
+    
               filter: ColorFilter.mode(
-                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 BlendMode.srcOver,
               ),
               child: Container(color: Colors.transparent),
@@ -304,15 +313,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                    color: const Color.fromRGBO(0, 0, 0, 1).withValues(alpha: isDark ? 0.3 : 0.08),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
                 ],
                 border: Border.all(
-                  color: isDark ? Colors.white.withOpacity(0.05) : AppColors.primary.withOpacity(0.1),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.primary.withValues(alpha: 0.1),
                 ),
               ),
+              
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -353,7 +363,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   boxShadow: [
                     if (isSelected)
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
+                        color: AppColors.primary.withValues(alpha: 0.4),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -374,7 +384,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                       size: 24,
                       color: isSelected 
                         ? AppColors.primary 
-                        : (isDark ? Colors.white54 : AppColors.textSecondary.withOpacity(0.5)),
+                        : (isDark ? Colors.white54 : AppColors.textSecondary.withValues(alpha: 0.5)),
                     ),
                   );
                 },
@@ -389,7 +399,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
                   color: isSelected 
                     ? AppColors.primary 
-                    : (isDark ? Colors.white54 : AppColors.textSecondary.withOpacity(0.5)),
+                    : (isDark ? Colors.white54 : AppColors.textSecondary.withValues(alpha: 0.5)),
                 ),
               ),
             ],

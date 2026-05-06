@@ -109,9 +109,48 @@ class DrugInteractionSeeder {
         'تثقيف المريض حول أعراض بديلة لنقص السكر (مثل التعرق الزائد)'),
       
       // ─── أدوية أخرى ───
+      // ─── أدوية أخرى ───
       _create(uuid, clinicId, now, 'lisinopril', 'potassium', 3, 
         'فرط بوتاسيوم الدم الخطير، لأن ACE inhibitor يقلل إفراز البوتاسيوم', 
         'تجنب مكملات البوتاسيوم واختبر البوتاسيوم دورياً'),
+
+      // 💊 تداخلات المضادات الحيوية (Antibiotics)
+      _create(uuid, clinicId, now, 'clarithromycin', 'simvastatin', 4, 'سمية عضلية حادة (Rhabdomyolysis)', 'أوقف الستاتين مؤقتاً أثناء العلاج بالمضاد الحيوي'),
+      _create(uuid, clinicId, now, 'clarithromycin', 'amlodipine', 3, 'انخفاض ضغط دم شديد وفشل كلوي حاد', 'راقب الضغط بحذر أو استبدل المضاد الحيوي'),
+      _create(uuid, clinicId, now, 'azithromycin', 'amiodarone', 4, 'إطالة فترة QT - خطر توقف القلب المفاجئ', 'تجنب الجمع، راقب تخطيط القلب ECG'),
+      _create(uuid, clinicId, now, 'ciprofloxacin', 'tizanidine', 4, 'هبوط ضغط حاد وإغماء', 'تجنب الجمع تماماً - تفاعل خطير جداً'),
+      _create(uuid, clinicId, now, 'ciprofloxacin', 'theophylline', 3, 'سمية الثيوفيلين (تشنجات، خفقان)', 'قلل جرعة الثيوفيلين للنصف وراقب مستواه في الدم'),
+      _create(uuid, clinicId, now, 'doxycycline', 'isotretinoin', 4, 'ارتفاع ضغط الجمجمة الحميد (Pseudotumor cerebri)', 'تجنب الجمع تماماً - خطر على البصر'),
+      _create(uuid, clinicId, now, 'doxycycline', 'iron', 2, 'فشل امتصاص المضاد الحيوي', 'افصل بينهما بـ 3 ساعات على الأقل'),
+
+      // 💊 أدوية القلب والضغط (Cardiovascular)
+      _create(uuid, clinicId, now, 'digoxin', 'spironolactone', 3, 'ارتفاع مستوى الديجوكسين لدرجة السمية', 'راقب مستوى الديجوكسين والبوتاسيوم بدقة'),
+      _create(uuid, clinicId, now, 'digoxin', 'amiodarone', 3, 'سمية الديجوكسين (اضطراب نظم القلب)', 'قلل جرعة الديجوكسين بنسبة 50% عند البدء بالأميودارون'),
+      _create(uuid, clinicId, now, 'spironolactone', 'lisinopril', 3, 'فرط بوتاسيوم الدم الشديد', 'راقب مستوى البوتاسيوم كل أسبوع في البداية'),
+      _create(uuid, clinicId, now, 'sildenafil', 'nitroglycerin', 4, 'هبوط ضغط قاتل', 'ممنوع الجمع تماماً - خطر الموت'),
+      _create(uuid, clinicId, now, 'verapamil', 'atenolol', 4, 'هبوط نبض حاد وفشل قلب', 'تجنب الجمع بين حاصرات بيتا وحاصرات كالسيوم معينة'),
+
+      // 💊 أدوية الجهاز العصبي (CNS)
+      _create(uuid, clinicId, now, 'fluoxetine', 'tramadol', 4, 'متلازمة السيروتونين (Serotonin Syndrome) - تشنجات وهذيان', 'تجنب الجمع - خطر الوفاة'),
+      _create(uuid, clinicId, now, 'sertraline', 'aspirin', 3, 'زيادة خطر النزيف الهضمي', 'استخدم حامياً للمعدة (PPI) عند الضرورة'),
+      _create(uuid, clinicId, now, 'lithium', 'ibuprofen', 3, 'سمية الليثيوم (فشل كلوي وتشنجات)', 'تجنب الـ NSAIDs لمرضى الليثيوم، استخدم الباراسيتامول'),
+      _create(uuid, clinicId, now, 'lithium', 'hydrochlorothiazide', 3, 'ارتفاع حاد في مستوى الليثيوم', 'راقب مستوى الليثيوم، قد تحتاج لتقليل الجرعة'),
+      _create(uuid, clinicId, now, 'carbamazepine', 'erythromycin', 3, 'سمية الكربامازيبين (دوخة، رؤية مزدوجة)', 'استخدم أزيثرومايسين كبديل آمن'),
+
+      // 💊 أدوية الجهاز الهضمي (GI)
+      _create(uuid, clinicId, now, 'omeprazole', 'clopidogrel', 3, 'فشل مفعول الكلوبيدوجريل - خطر جلطات قلبية', 'استخدم Pantoprazole كبديل آمن للأوميبرازول'),
+      _create(uuid, clinicId, now, 'metoclopramide', 'haloperidol', 3, 'أعراض خارج هرمية شديدة (Extrapyramidal symptoms)', 'تجنب الجمع لمنع التشنجات العضلية الحادة'),
+
+      // 💊 مضادات الفطريات (Antifungals)
+      _create(uuid, clinicId, now, 'fluconazole', 'warfarin', 3, 'نزيف حاد لزيادة مفعول الوارفارين', 'راقب INR بدقة وقلل جرعة الوارفارين'),
+      _create(uuid, clinicId, now, 'ketoconazole', 'atorvastatin', 3, 'سمية الستاتين العضلية', 'تجنب الجمع أو أوقف الستاتين مؤقتاً'),
+
+      // 💊 أدوية أخرى مهمة
+      _create(uuid, clinicId, now, 'levothyroxine', 'calcium', 2, 'فشل امتصاص هرمون الغدة', 'افصل بينهما بـ 4 ساعات على الأقل'),
+      _create(uuid, clinicId, now, 'levothyroxine', 'iron', 2, 'فشل امتصاص هرمون الغدة', 'افصل بينهما بـ 4 ساعات على الأقل'),
+      _create(uuid, clinicId, now, 'allopurinol', 'azathioprine', 4, 'فشل نخاع العظم (سمية حادة)', 'قلل جرعة الآزاثيوبرين لـ 25% من الجرعة المعتادة'),
+      _create(uuid, clinicId, now, 'methotrexate', 'ibuprofen', 3, 'سمية الميثوتريكسيت (فشل كلوي وهبوط دم)', 'تجنب الـ NSAIDs، استخدم الباراسيتامول'),
+      _create(uuid, clinicId, now, 'tamoxifen', 'paroxetine', 3, 'فشل مفعول التاموكسيفين (زيادة خطر عودة السرطان)', 'استخدم Venlafaxine كبديل آمن'),
     ];
 
     return interactions;

@@ -13,6 +13,8 @@ import 'package:rachita/core/utils/clinical_logic.dart';
 import '../providers/patient_provider.dart';
 import '../widgets/clinical_risk_card.dart';
 import '../widgets/medication_list_widget.dart';
+import '../../../../core/services/ai_copilot_service.dart';
+import '../../../prescription/presentation/widgets/live_clinical_chat_widget.dart';
 
 
 class PatientDetailScreen extends ConsumerStatefulWidget {
@@ -66,17 +68,53 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen> {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            ref.read(currentPrescriptionProvider.notifier).state = null;
-            Navigator.push(context, MaterialPageRoute(builder: (_) => NewPrescriptionScreen(patientId: widget.patient.id!)));
-          },
-          backgroundColor: AppColors.primary,
-          elevation: 4,
-          icon: const Icon(Icons.add_moderator_rounded, color: Colors.white),
-          label: const Text('روشتة جديدة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // زر المساعد الذكي (AI Copilot)
+            FloatingActionButton(
+              heroTag: 'ai_consult',
+              onPressed: () => _openAiCopilot(),
+              backgroundColor: const Color(0xFF1A2236),
+              elevation: 6,
+              mini: false,
+              tooltip: 'استشارة المساعد الذكي',
+              child: const Icon(Icons.psychology_rounded, color: Colors.white, size: 28),
+            ),
+            const SizedBox(height: 12),
+            // زر روشتة جديدة
+            FloatingActionButton.extended(
+              heroTag: 'new_rx',
+              onPressed: () {
+                ref.read(currentPrescriptionProvider.notifier).state = null;
+                Navigator.push(context, MaterialPageRoute(builder: (_) => NewPrescriptionScreen(patientId: widget.patient.id!)));
+              },
+              backgroundColor: AppColors.primary,
+              elevation: 4,
+              icon: const Icon(Icons.add_moderator_rounded, color: Colors.white),
+              label: const Text('روشتة جديدة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  void _openAiCopilot() {
+    final doctor = ref.read(doctorProvider).value;
+    if (doctor == null) return;
+
+    // تهيئة المساعد ببيانات المريض الحالي
+    ref.read(aiCopilotServiceProvider).initializeContext(
+      patient: widget.patient,
+      doctor: doctor,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const LiveClinicalChatWidget(),
     );
   }
 

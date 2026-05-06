@@ -432,6 +432,41 @@ class DatabaseHelper {
         'CREATE INDEX idx_clinical_alerts_patient ON ${DBConstants.tableClinicalAlerts}(patient_id)');
     await db.execute(
         'CREATE INDEX idx_clinical_alerts_priority ON ${DBConstants.tableClinicalAlerts}(priority)');
+
+    // 🔐 AUDIT LOG - سجل التدقيق
+    await db.execute('''
+      CREATE TABLE ${DBConstants.tableAuditLog} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT,
+        entity_id TEXT,
+        details TEXT,
+        ip_address TEXT,
+        device_info TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+
+    // 🔔 MEDICATION REMINDERS - تذكيرات الأدوية
+    await db.execute('''
+      CREATE TABLE ${DBConstants.tableMedicationReminders} (
+        id TEXT PRIMARY KEY,
+        patient_id INTEGER NOT NULL,
+        prescription_id INTEGER,
+        medicine_name TEXT NOT NULL,
+        reminder_time TEXT NOT NULL,
+        frequency_type TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(patient_id) REFERENCES ${DBConstants.tablePatients}(id) ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute(
+        'CREATE INDEX idx_audit_log_created ON ${DBConstants.tableAuditLog}(created_at)');
+    await db.execute(
+        'CREATE INDEX idx_medication_reminders_patient ON ${DBConstants.tableMedicationReminders}(patient_id)');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -857,6 +892,47 @@ class DatabaseHelper {
         debugPrint("✅ Database Upgraded to Version 21 (Pediatric Indicators)");
       } catch (e) {
         debugPrint("⚠️ Error in Version 21 upgrade: $e");
+      }
+    }
+
+    if (oldVersion < 23) {
+      try {
+        // Audit Log
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${DBConstants.tableAuditLog} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
+            action TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id TEXT,
+            details TEXT,
+            ip_address TEXT,
+            device_info TEXT,
+            created_at TEXT NOT NULL
+          )
+        ''');
+        
+        // Medication Reminders
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS ${DBConstants.tableMedicationReminders} (
+            id TEXT PRIMARY KEY,
+            patient_id INTEGER NOT NULL,
+            prescription_id INTEGER,
+            medicine_name TEXT NOT NULL,
+            reminder_time TEXT NOT NULL,
+            frequency_type TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(patient_id) REFERENCES ${DBConstants.tablePatients}(id) ON DELETE CASCADE
+          )
+        ''');
+        
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_audit_log_created ON ${DBConstants.tableAuditLog}(created_at)');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_medication_reminders_patient ON ${DBConstants.tableMedicationReminders}(patient_id)');
+        
+        debugPrint("✅ Database Upgraded to Version 23 (Audit & Reminders)");
+      } catch (e) {
+        debugPrint("⚠️ Error in Version 23 upgrade: $e");
       }
     }
   }
